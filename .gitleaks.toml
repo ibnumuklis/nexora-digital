@@ -1,0 +1,11 @@
+title = "NEXORA gitleaks config"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Browser-safe Supabase publishable key and CI-only placeholder salt (not secrets; RLS protects data)"
+regexes = [
+  '''sb_publishable_[A-Za-z0-9_-]+''',
+  '''ci-only-salt-not-a-secret-0123456789''',
+]

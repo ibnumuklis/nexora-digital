@@ -1,0 +1,5 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": { "jsx": "react-jsx", "noEmit": true },
+  "include": ["src/lib/**/*.ts", "src/lib/**/*.tsx", "worker/**/*.ts", "worker/**/*.tsx", "tests/**/*.ts"]
+}

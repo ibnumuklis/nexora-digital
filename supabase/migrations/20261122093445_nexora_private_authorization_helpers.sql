@@ -1,0 +1,32 @@
+-- Copied verbatim from live supabase_migrations.schema_migrations (version 20261122093445).
+-- ALREADY APPLIED to project ijkazeukjooauwsvwtiq. Never edit.
+create schema if not exists private;
+create or replace function private.is_nexora_staff() returns boolean language sql stable security definer set search_path=public,pg_temp as $$ select exists(select 1 from public.staff_members where user_id=auth.uid() and is_active) $$;
+create or replace function private.has_nexora_role(allowed_roles text[]) returns boolean language sql stable security definer set search_path=public,pg_temp as $$ select exists(select 1 from public.staff_members where user_id=auth.uid() and is_active and role=any(allowed_roles)) $$;
+revoke all on schema private from public,anon;
+grant usage on schema private to authenticated;
+revoke all on function private.is_nexora_staff() from public,anon;
+revoke all on function private.has_nexora_role(text[]) from public,anon;
+grant execute on function private.is_nexora_staff() to authenticated;
+grant execute on function private.has_nexora_role(text[]) to authenticated;
+alter policy "Staff read staff" on public.staff_members using(private.is_nexora_staff());
+alter policy "Super admins manage staff" on public.staff_members using(private.has_nexora_role(array['super_admin'])) with check(private.has_nexora_role(array['super_admin']));
+alter policy "Staff manage integrations" on public.product_integrations using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage demo policies" on public.demo_policies using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage leads" on public.leads using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage lead activities" on public.lead_activities using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage inquiries" on public.sales_inquiries using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage pricing" on public.pricing_packages using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage subscriptions" on public.subscriptions using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage licenses" on public.licenses using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage content projects" on public.content_projects using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage content assets" on public.content_assets using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage templates" on public.content_templates using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage calendar" on public.content_calendar using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage recommendations" on public.ai_recommendations using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff read analytics" on public.analytics_events using(private.is_nexora_staff());
+alter policy "Staff manage testimonials" on public.testimonials using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff manage articles" on public.articles using(private.is_nexora_staff()) with check(private.is_nexora_staff());
+alter policy "Staff read audit logs" on public.audit_logs using(private.is_nexora_staff());
+drop function public.is_nexora_staff();
+drop function public.has_nexora_role(text[]);

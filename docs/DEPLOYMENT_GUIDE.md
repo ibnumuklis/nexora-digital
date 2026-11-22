@@ -1,36 +1,49 @@
-# Deployment Guide
+# Deployment guide
 
-## Current status
+> No production deployment has been performed. Deploying requires explicit owner approval, a chosen host and domain.
 
-Deployment has not been performed. No production domain, Vercel project, or production secrets have been configured.
+## 1. Prerequisites (owner)
+- Hosting choice for the web app (recommended: Vercel — Next.js App Router, Node runtime).
+- Host for the render worker (container/VM with ffmpeg; see `RENDER_WORKER.md`).
+- Domain + DNS access.
+- Supabase Auth settings (Dashboard → Authentication → URL configuration):
+  - **Site URL**: `https://<production-domain>`
+  - **Redirect URLs**: `https://<production-domain>/auth/callback`, plus `http://localhost:3000/auth/callback` for development and preview URLs if used.
+  - Providers → Email → **Minimum password length: 12** (recommended, matches app policy).
+  - Optional but recommended: custom SMTP (see `SECURITY_FREE_PLAN_LIMITATIONS.md`).
+- Email templates: the default templates work with `/auth/callback` (PKCE `?code=`). If you customise templates to the token-hash style, link to `{{ .SiteURL }}/auth/callback?token_hash={{ .TokenHash }}&type=<signup|recovery|magiclink>`.
 
-## Local development
+## 2. Environment variables (web app)
+| Variable | Scope | Required | Notes |
+|---|---|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | public | yes | `https://ijkazeukjooauwsvwtiq.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | public | yes | `sb_publishable_…` |
+| `NEXT_PUBLIC_SITE_URL` | public | yes | canonical origin, e.g. `https://nexora.digital` |
+| `VISITOR_HASH_SALT` | server secret | **yes in production** | ≥ 16 random chars (`openssl rand -hex 24`). Without it, demos and inquiry visitor keys fail closed. |
+| `INTEGRATION_ALLOWED_HOSTS` | server | for health checks | comma list of verified product apex domains |
+| `DEMO_IFRAME_HOSTS` | server | for iframe demos | comma list of isolated demo hosts |
+| `AI_PROVIDER_ENABLED`, `AI_PROVIDER`, `AI_PROVIDER_API_KEY` | server secret | no | keep unset until provider & budget approved |
 
+**Never** set `SUPABASE_SERVICE_ROLE_KEY` on the web app — it is not used there.
+
+## 3. Database
+All migrations in `supabase/migrations/` are already applied to the live project (versions match file names). For a new environment apply them in order, then run `supabase/tests/rls_rpc_test.sql` (expected final message `ALL_TESTS_PASSED`).
+
+## 4. Deploy (Vercel example)
+1. Import the GitHub repository; framework preset Next.js; Node 22.
+2. Add the environment variables above for Production (and Preview with a staging Supabase project if available).
+3. Deploy a **preview** from the PR branch, run the smoke tests below, then promote only with owner approval.
+
+## 5. Smoke tests after deploy
 ```bash
-cp .env.example .env.local
-npm install
-npm run dev
+E2E_BASE_URL=https://<preview-url> npx playwright test tests/e2e/public.spec.ts tests/e2e/security.spec.ts
 ```
+Manual: sign in as Super Admin → Overview loads → Products list shows the 5 drafts → Security page "Configuration checks" all green.
 
-## Production deployment outline
-
-1. Create a dedicated Supabase project in the selected organisation and region.
-2. Apply the SQL migrations in order after review.
-3. Create the initial Auth user and assign `super_admin` through a trusted SQL editor.
-4. Configure environment variables in the hosting project.
-5. Connect the Git repository to Vercel or the selected Next.js host.
-6. Configure the production domain and TLS.
-7. Configure separate demo deployments and server-side proxy allowlists.
-8. Add Redis/edge rate limiting, monitoring, backups, and alerting.
-9. Run build, tests, security review, accessibility checks, and production smoke tests.
-10. Publish products only after real URLs, product claims, legal terms, pricing, and demo availability are verified.
-
-## Required secrets
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `SUPABASE_SERVICE_ROLE_KEY` (server only)
-- `AI_PROVIDER_API_KEY` (only after provider and budget approval)
-- `REDIS_URL` (if using Redis rate limiting/session support)
-
-Never commit `.env.local` or production secrets.
+## 6. Going live checklist
+- [ ] Owner approved legal texts (privacy, terms, cookies, demo disclaimer) — remove "Draft" banner in `src/components/site/legal.tsx`.
+- [ ] At least one product verified and published via Admin.
+- [ ] `VISITOR_HASH_SALT` set; Security page checks green.
+- [ ] Custom SMTP configured if staff outside the Supabase team will sign in.
+- [ ] Backup export taken (`RUNBOOK.md`).
+- [ ] Owner's explicit production approval recorded in the PR.

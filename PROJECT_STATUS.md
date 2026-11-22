@@ -1,43 +1,38 @@
-# NEXORA DIGITAL — Project Status & Handoff
+# NEXORA DIGITAL — Project Status
 
-**Brand:** NEXORA DIGITAL — Technology & Product Studio  
-**Tagline:** Build. Innovate. Transform.  
-**Owner:** Ibnu Muklis  
-**Handoff date:** 2026-11-22  
-**GitHub repository:** https://github.com/ibnumuklis/nexora-digital.git  
-**Supabase project:** `nexora-digital` (`ijkazeukjooauwsvwtiq`)  
+**Brand:** NEXORA DIGITAL — Technology & Product Studio · *Build. Innovate. Transform.*
+**Owner:** Ibnu Muklis · **Repo:** `ibnumuklis/nexora-digital` · **Supabase:** `nexora-digital` (`ijkazeukjooauwsvwtiq`, Tokyo, Free Plan)
+**Updated:** 2026-11-22 · **Branch:** `claude/nexora-production-readiness` (PR open, not merged, **not deployed**)
 
 ## Current truth
-This package is a source-code and documentation baseline prepared for takeover by Claude Code. It is not a verified production release. The latest GitHub repository may differ and is authoritative for source code. The live Supabase project has been configured separately and its schema is known to differ from the clean-project SQL migrations in this repository.
+The application is functionally complete for every module in the brief and passes lint, typecheck, 58 unit tests, production build, 18 browser E2E tests and a ~60-assertion RLS/RPC suite on the live database. It is **not production-ready** until the owner inputs below are provided and production deployment is approved. Evidence: `docs/audit/ACCEPTANCE_REPORT.md`.
 
-## Supabase observations
-- Project status reported ACTIVE_HEALTHY, Tokyo region.
-- Four migrations were applied during the setup session.
-- 23 public tables reported; RLS enabled on inspected business tables.
-- Four product categories and five initial product drafts seeded.
-- Live RBAC uses `staff_members` and private-schema authorization helpers, not the `user_roles` model expected by the included original migration/code scaffolding.
-- A Super Admin record was observed in `staff_members` after setup. Claude must verify current state without exposing unnecessary user data.
-- `demo_sessions` has no direct browser-facing policy by design; server-only access is required.
-- Security advisor no longer reported the previous externally executable SECURITY DEFINER helper issue; one informational finding about `demo_sessions` remained.
+## Database
+- Live schema is canonical (ADR-001). 8 migrations in `supabase/migrations/` = exactly the 8 applied on live (3 added by Claude: RBAC/audit hardening, modules (CRM/demo/content/analytics), lead_score search_path).
+- Live data unchanged except schema: 4 categories, 5 draft products (unverified, no category), 1 Super Admin, 0 leads. All tests rolled back.
 
-## Phase status (honest assessment)
-| Phase | Status | Remaining proof/work |
+## Phase status
+| Phase | Status | Remaining |
 |---|---|---|
-| 0 — Blueprint | Prepared | Claude to compare with latest repository and maintain ADRs |
-| 1 — Public UI/UX | Source starter exists | Run lint/typecheck/build/E2E; compare latest GitHub source; finish visual QA |
-| 2 — Database/Admin | Live Supabase configured; app integration incomplete | Reconcile schema, SSR Auth, RBAC, CRUD, storage and RLS tests |
-| 3 — Integrations | Specs/scaffolding | Real product URLs, SSRF-safe health checks, API/iframe validation |
-| 4 — Demo Engine | Spec/scaffolding | Isolated demo runtimes, server enforcement, cleanup, security tests |
-| 5 — CRM/Sales | Schema/scaffolding | Complete API, pipeline mutations, quotes, consent and tests |
-| 6 — Content Studio | Basic export prototype | Editable editor, provider integration, actual MP4 worker, asset persistence |
-| 7 — Analytics/AI | Schema/scaffolding | Consent-aware tracking, real dashboards, evidence-backed recommendations |
-| 8 — Production | Not ready | CI, security/performance/accessibility QA, backups, domain, hosting, monitoring, smoke tests and owner approval |
+| 0 Audit & blueprint | ✅ Done | — |
+| 1 Public UI/UX | ✅ Built & tested | Real product content (owner) |
+| 2 Database & admin | ✅ Built; RLS tested on live | Run live-auth E2E (needs CI secret or allowed domain) |
+| 3 Integrations | ✅ Built (SSRF-safe) | Verified product URLs + `INTEGRATION_ALLOWED_HOSTS` |
+| 4 Demo engine | ✅ Built & tested in DB | Publish a verified product; isolated demo deployment if iframe mode |
+| 5 CRM & sales | ✅ Built & tested | — |
+| 6 Content Studio | ✅ PNG/JPG/MP4 verified | AI provider + budget; worker host |
+| 7 Analytics & recommendations | ✅ Built & tested | Real traffic |
+| 8 Production | 🟡 CI, headers, runbooks done | Hosting, domain, legal approval, monitoring, backups schedule, owner approval |
 
-## Known critical issue
-See `docs/SUPABASE_LIVE_STATE_AND_RECONCILIATION.md`. Do not blindly apply `supabase/migrations/0001_initial_catalog.sql` or `0002_platform_modules.sql` to the live project. They expect a different schema in several places.
+## Owner inputs required
+See `docs/OWNER_INPUT_CHECKLIST.md` (updated). Most urgent:
+1. Allow live tests: add GitHub secrets `E2E_SUPABASE_URL` + `E2E_SUPABASE_SERVICE_ROLE_KEY` (or allow `ijkazeukjooauwsvwtiq.supabase.co` for this Claude workspace).
+2. Supabase Auth: Site URL + redirect `…/auth/callback`; minimum password length 12; custom SMTP for non-team staff emails.
+3. Verify each product (facts, screenshots, URLs) then publish in Admin.
+4. Choose hosting (web + render worker) and domain; approve legal texts.
 
-## External/owner dependencies
-See `docs/OWNER_INPUT_CHECKLIST.md`. No secret values are included in this handoff. AI/video integrations, domain, hosting, legal text, verified product assets/URLs, and production deployment require owner input/approval.
-
-## Required next action
-Claude Code must first inspect the current GitHub repository and live Supabase schema read-only, reconcile discrepancies, then execute the phases in `docs/CLAUDE_HANDOFF_PROMPT.md` on a feature branch with tests and reviewable commits.
+## Known issues / risks
+- Duplicate index `idx_leads_owner_fk` (harmless; drop in next maintenance migration).
+- Public RPCs callable with the publishable key bypass the Next.js IP limiter (DB limits still apply) — ADR-003.
+- Free Plan: no HIBP leaked-password check, limited email sending, no PITR — `docs/SECURITY_FREE_PLAN_LIMITATIONS.md`.
+- MFA not yet enforced for admins (TOTP available on Free; owner decision).

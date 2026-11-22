@@ -1,0 +1,17 @@
+# Security limitations of the Supabase Free Plan — and compensating controls
+
+**Project:** `nexora-digital` (`ijkazeukjooauwsvwtiq`) · **Plan (stated by owner 2026-11-22):** Free
+**Auth settings (stated by owner):** Email auth enabled · Confirm email enabled · Magic links & Email OTP enabled.
+
+| Limitation on Free Plan | Risk | Compensating control in NEXORA | Residual risk / upgrade path |
+|---|---|---|---|
+| **Leaked-password protection (HaveIBeenPwned) unavailable** (Pro+) | Staff could choose a password known from breaches | App-enforced policy (`src/lib/auth/password.ts`): ≥ 12 chars, ≤ 72, ≥ 3 character classes, no 4× repeated chars, local denylist of common passwords, must not contain the email name. Enforced on sign-up, reset and account password change (server actions) with a live strength meter. Unit + E2E tested. | Breached-but-complex passwords are not detected. Recommended: also set **Auth → Providers → Email → Minimum password length = 12** in the dashboard (available on Free) so the API rejects short passwords even if called directly. Upgrade to Pro to enable HIBP. |
+| **Built-in email service is rate-limited** (a few emails/hour) and, by default, **only delivers to project team members' addresses** | Confirmation / magic-link / reset emails may not arrive; sign-up of non-team addresses fails | Generic, non-enumerating messages; clear "contact the administrator" error when delivery is refused; staff accounts are invited by a Super Admin. Public visitors never need auth. | Configure **custom SMTP** (Auth → SMTP; available on Free) with a transactional email provider before onboarding staff outside the Supabase team. |
+| **No Point-in-Time Recovery; daily backups not downloadable/retained like Pro** | Data loss window up to the last manual export | Runbook (`docs/RUNBOOK.md`) defines a weekly `pg_dump` export procedure + storage bucket export; migrations are fully reproducible from `supabase/migrations/`. | Upgrade to Pro (daily backups, 7-day retention) or Pro + PITR before handling customer contracts. |
+| **No Supabase branching / separate staging DB** | Tests and development touch the live project | SQL acceptance tests run in a single transaction that always rolls back; E2E tests only write data when they can delete it again; test users use the reserved `.invalid` TLD. | Create a second Free project as staging, or use Pro branching. |
+| **Project pauses after inactivity** (Free) | Public site shows "catalog temporarily unavailable"; demos/forms fail | Every public page and API has an explicit unavailable / error state (no crash, no fake data). | Pro plan does not pause. |
+| **No SAML SSO / limited auth audit log retention** | Fewer enterprise controls | App-level `audit_logs` (triggers on every privileged table, exports and erasures), role-based access in RLS, "sign out everywhere". | Pro/Team for SSO and longer auth logs. |
+| **No custom domain for Supabase API on Free** | Supabase URL visible to browsers | Only the publishable key is exposed; all data protected by RLS and SECURITY DEFINER functions with explicit grants. | Optional. |
+| **MFA**: TOTP is available on Free but not enforced by default | Account takeover with a stolen password | Short-lived sessions with rotating refresh tokens, audit trail, last-super-admin guard. | **Recommended next step:** enable TOTP MFA and require AAL2 for `/admin` (planned enhancement; needs owner decision on enforcement). |
+
+Owner decision recorded: **do not ask again about Leaked Password Protection**; it stays off on the Free Plan.

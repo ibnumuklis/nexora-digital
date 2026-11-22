@@ -1,17 +1,109 @@
-'use client';
-import { useMemo,useState } from 'react';
-import { Copy,Download,Sparkles,Image as ImageIcon,Video,FileText,LoaderCircle } from 'lucide-react';
-import { products } from '@/lib/data';
-import { AdminPageTitle } from '@/components/admin-shell';
+import Link from 'next/link';
+import { Wand2, Download, Film } from 'lucide-react';
+import { requirePagePermission } from '@/lib/auth/session';
+import { can } from '@/lib/auth/rbac';
+import { OBJECTIVES, PLATFORMS, TONES } from '@/lib/content/copy';
+import { aiStatus } from '@/lib/content/ai-provider';
+import { PageHeader, Badge, EmptyState, Alert } from '@/components/ui';
+import { DataTable, Td, fmtDate } from '@/components/admin/table';
+import { ActionForm, SelectInput, SubmitButton, TextInput } from '@/components/admin/form';
+import { createProject, setJobStatus } from './actions';
 
-function escapeXml(value:string){return value.replace(/[<>&'\"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;',"'":'&apos;','"':'&quot;'}[c]||c));}
-export default function ContentStudio(){
- const [product,setProduct]=useState(products[0].slug);const [goal,setGoal]=useState('Feature highlight');const [channel,setChannel]=useState('Instagram');const [tone,setTone]=useState('Professional');const [copied,setCopied]=useState(false);const [rendering,setRendering]=useState(false);const [videoUrl,setVideoUrl]=useState('');
- const p=products.find(x=>x.slug===product)!;
- const output=useMemo(()=>`${p.name}: ${goal}\n\nKenali cara yang lebih praktis untuk ${p.description.toLowerCase()}\n\nSorotan fitur: ${p.features.slice(0,3).join(', ')}.\n\nDirancang untuk ${p.audience.toLowerCase()}.\n\nIngin melihat bagaimana solusi ini bekerja? Jelajahi preview produk atau diskusikan kebutuhan Anda bersama NEXORA DIGITAL.\n\n#NexoraDigital #DigitalProduct #BusinessTechnology #${p.category.replace(/[^a-z]/gi,'')}`,[p,goal]);
- function downloadText(){const blob=new Blob([output],{type:'text/plain;charset=utf-8'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`${p.slug}-content.txt`;a.click();URL.revokeObjectURL(url)}
- async function copy(){await navigator.clipboard.writeText(output);setCopied(true);setTimeout(()=>setCopied(false),1500)}
- async function downloadPoster(){const title=escapeXml(p.name);const subtitle=escapeXml(goal.toUpperCase());const description=escapeXml(p.description);const features=p.features.slice(0,3).map((f,i)=>`<text x="90" y="1110" fill="#DDE9DF" font-size="42">0${i+1}  ${escapeXml(f)}</text>`).join('');const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350" viewBox="0 0 1080 1350"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#102C25"/><stop offset="1" stop-color="#16845B"/></linearGradient></defs><rect width="1080" height="1350" fill="url(#g)"/><circle cx="900" cy="210" r="300" fill="none" stroke="#C5F36B" stroke-opacity=".18" stroke-width="2"/><circle cx="900" cy="210" r="220" fill="none" stroke="#C5F36B" stroke-opacity=".2" stroke-width="2"/><text x="90" y="110" fill="#C5F36B" font-size="26" font-family="Arial" letter-spacing="8">NEXORA DIGITAL</text><text x="90" y="250" fill="#C5F36B" font-size="25" font-family="Arial" letter-spacing="4">${subtitle}</text><text x="90" y="440" fill="#FFFFFF" font-size="82" font-weight="700" font-family="Arial">${title.length>24?title.slice(0,24):title}</text><foreignObject x="90" y="500" width="850" height="250"><div xmlns="http://www.w3.org/1999/xhtml" style="font:36px/1.35 Arial;color:#DDE9DF">${description}</div></foreignObject><rect x="90" y="820" width="900" height="1" fill="#C5F36B" opacity=".55"/>${features}<text x="90" y="1270" fill="#C5F36B" font-size="28" font-family="Arial" letter-spacing="4">BUILD. INNOVATE. TRANSFORM.</text></svg>`;const blob=new Blob([svg],{type:'image/svg+xml'});const url=URL.createObjectURL(blob);const img=new Image();img.onload=()=>{const canvas=document.createElement('canvas');canvas.width=1080;canvas.height=1350;const ctx=canvas.getContext('2d');if(!ctx)return;ctx.drawImage(img,0,0);canvas.toBlob(file=>{if(!file)return;const png=URL.createObjectURL(file);const a=document.createElement('a');a.href=png;a.download=`${p.slug}-poster.png`;a.click();URL.revokeObjectURL(png);URL.revokeObjectURL(url)},'image/png')};img.onerror=()=>URL.revokeObjectURL(url);img.src=url;}
- async function renderVideo(){if(typeof MediaRecorder==='undefined'){alert('Video recording is not supported by this browser.');return;}setRendering(true);if(videoUrl)URL.revokeObjectURL(videoUrl);const canvas=document.createElement('canvas');canvas.width=720;canvas.height=1280;const ctx=canvas.getContext('2d');if(!ctx){setRendering(false);return;}const stream=canvas.captureStream(30);const mime=MediaRecorder.isTypeSupported('video/webm;codecs=vp9')?'video/webm;codecs=vp9':'video/webm';const recorder=new MediaRecorder(stream,{mimeType:mime});const chunks:BlobPart[]=[];recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};recorder.onstop=()=>{const blob=new Blob(chunks,{type:'video/webm'});const url=URL.createObjectURL(blob);setVideoUrl(url);setRendering(false);stream.getTracks().forEach(t=>t.stop())};let start=0;const duration=8000;const draw=(now:number)=>{if(!start)start=now;const t=Math.min((now-start)/duration,1);ctx.fillStyle='#102C25';ctx.fillRect(0,0,720,1280);ctx.strokeStyle='rgba(197,243,107,.16)';for(let x=30;x<720;x+=36)for(let y=30;y<1280;y+=36){ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.stroke()}ctx.fillStyle='#C5F36B';ctx.font='bold 18px Arial';ctx.fillText('NEXORA DIGITAL',64,90);ctx.fillStyle='rgba(197,243,107,.2)';ctx.beginPath();ctx.arc(610,240,120+Math.sin(t*8)*8,0,Math.PI*2);ctx.fill();ctx.fillStyle='#C5F36B';ctx.font='bold 17px Arial';ctx.fillText(goal.toUpperCase(),64,270);ctx.fillStyle='#FFFFFF';ctx.font='bold 52px Arial';const words=p.name.split(' ');let line='',y=390;for(const word of words){const test=line?line+' '+word:word;if(ctx.measureText(test).width>590){ctx.fillText(line,64,y);line=word;y+=65}else line=test}ctx.fillText(line,64,y);ctx.fillStyle='#DDE9DF';ctx.font='24px Arial';const desc=p.description;const lines=desc.match(/.{1,43}(?:\s|$)/g)||[desc];lines.slice(0,4).forEach((l,i)=>ctx.fillText(l.trim(),64,y+100+i*38));ctx.strokeStyle='rgba(197,243,107,.6)';ctx.beginPath();ctx.moveTo(64,800);ctx.lineTo(656,800);ctx.stroke();ctx.fillStyle='#C5F36B';ctx.font='bold 21px Arial';ctx.fillText('FEATURE HIGHLIGHTS',64,855);ctx.fillStyle='#FFFFFF';ctx.font='21px Arial';p.features.slice(0,3).forEach((f,i)=>ctx.fillText('0'+(i+1)+'  '+f.slice(0,38),64,920+i*58));ctx.fillStyle='#C5F36B';ctx.font='bold 23px Arial';ctx.fillText('BUILD. INNOVATE. TRANSFORM.',64,1160);ctx.fillStyle='rgba(255,255,255,.4)';ctx.fillRect(64,1210,592,5);ctx.fillStyle='#C5F36B';ctx.fillRect(64,1210,592*t,5);if(t<1)requestAnimationFrame(draw);else recorder.stop()};recorder.start();requestAnimationFrame(draw);}
- return <><AdminPageTitle eyebrow="AI-assisted creative workspace" title="Content Studio" description="Create product copy, export a branded PNG poster, and render a short animated WebM infographic from catalog data. AI provider and MP4 rendering worker remain optional integrations."/><div className="grid gap-5 xl:grid-cols-[.8fr_1.2fr]"><div className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="flex items-center gap-2 font-semibold text-forest"><Sparkles size={17} className="text-emerald"/> Content brief</h2><div className="mt-6 grid gap-5"><label className="grid gap-2 text-xs font-semibold text-forest">Product<select value={product} onChange={e=>{setProduct(e.target.value);setVideoUrl('')}} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal">{products.map(x=><option value={x.slug} key={x.slug}>{x.name}</option>)}</select></label><label className="grid gap-2 text-xs font-semibold text-forest">Content objective<select value={goal} onChange={e=>setGoal(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal">{['Feature highlight','Product awareness','Educational content','Lead generation','Product launch','Problem and solution'].map(x=><option key={x}>{x}</option>)}</select></label><label className="grid gap-2 text-xs font-semibold text-forest">Channel<select value={channel} onChange={e=>setChannel(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal">{['Instagram','TikTok','Facebook','LinkedIn','Website'].map(x=><option key={x}>{x}</option>)}</select></label><label className="grid gap-2 text-xs font-semibold text-forest">Tone<select value={tone} onChange={e=>setTone(e.target.value)} className="rounded-xl border border-slate-200 bg-white px-3 py-3 text-sm font-normal">{['Professional','Educational','Persuasive','Informative','Casual','Corporate'].map(x=><option key={x}>{x}</option>)}</select></label></div><div className="mt-7 rounded-xl bg-[#EAF4EC] p-4 text-xs leading-6 text-emerald">Copy is generated from product metadata using a deterministic template. No external AI request is made.</div></div><div className="rounded-2xl border border-slate-200 bg-white p-6"><div className="flex flex-wrap items-center justify-between gap-3"><div><h2 className="font-semibold text-forest">Content draft</h2><p className="mt-1 text-xs text-slate-400">{channel} · {tone} · {goal}</p></div><span className="rounded-full bg-lime/40 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-forest">Draft</span></div><textarea readOnly value={output} className="mt-6 min-h-[260px] w-full resize-y rounded-2xl border border-slate-200 bg-slate-50 p-5 text-sm leading-7 text-slate-600"/><div className="mt-5 flex flex-wrap gap-2"><button onClick={copy} className="btn-dark"><Copy size={14}/>{copied?'Copied':'Copy text'}</button><button onClick={downloadText} className="btn-lime"><Download size={14}/>Download TXT</button><button onClick={downloadPoster} className="btn-dark"><ImageIcon size={14}/>Export PNG 1080×1350</button></div><div className="mt-8 rounded-2xl border border-slate-100 p-5"><div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-semibold text-forest">Animated infographic</h3><p className="mt-1 text-xs text-slate-400">8-second vertical motion graphic · WebM</p></div><button disabled={rendering} onClick={renderVideo} className="btn-lime disabled:opacity-50">{rendering?<LoaderCircle className="animate-spin" size={14}/>:<Video size={14}/>} {rendering?'Rendering...':'Render video'}</button></div>{videoUrl&&<div className="mt-4"><video src={videoUrl} controls className="max-h-[420px] w-full rounded-xl bg-forest"/><a href={videoUrl} download={`${p.slug}-infographic.webm`} className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-emerald"><Download size={14}/>Download WebM</a></div>}<p className="mt-4 text-[10px] leading-5 text-slate-400">This browser-rendered output is WebM, not MP4. Production MP4 export, voice-over, licensed music, editable timeline, and background rendering require the planned FFmpeg/Remotion worker.</p></div></div></div></>;
+export const metadata = { title: 'Content Studio' };
+const label = (s: string) => s.replace(/_/g, ' ').replace(/^\w/, (c) => c.toUpperCase());
+
+export default async function ContentStudio() {
+  const ctx = await requirePagePermission('content.read');
+  const db = ctx.supabase;
+  const [{ data: projects }, { data: products }, { data: jobs }, { data: assets }, { data: calendar }] = await Promise.all([
+    db.from('content_projects').select('id,title,content_type,status,channel,updated_at,product:products(name)').order('updated_at', { ascending: false }).limit(100),
+    db.from('products').select('id,name').order('name'),
+    db.from('render_jobs').select('id,content_project_id,job_type,output_format,width,height,duration_seconds,status,progress,attempts,max_attempts,error,created_at,output_asset_id').order('created_at', { ascending: false }).limit(30),
+    db.from('content_assets').select('id,title,mime_type,width,height,duration_seconds,file_size_bytes,status,created_at').eq('status', 'ready').order('created_at', { ascending: false }).limit(40),
+    db.from('content_calendar').select('id,channel,scheduled_at,status,project:content_projects(title)').gte('scheduled_at', new Date(Date.now() - 86400000).toISOString()).order('scheduled_at').limit(20),
+  ]);
+  const w = can(ctx.role, 'content.write');
+  const ai = aiStatus();
+
+  return (
+    <>
+      <PageHeader eyebrow="AI Content Studio" title="Content projects" description="Product → brief → copy draft → editable design → verified PNG/JPG/MP4 → review → approval → calendar. Every output is a draft until approved." />
+      <Alert tone={ai.enabled ? 'success' : 'info'} className="mb-6" title={ai.enabled ? 'AI provider active' : 'AI provider not enabled'}>{ai.reason}</Alert>
+      <div className="grid gap-6 xl:grid-cols-[1fr_340px]">
+        <div className="grid gap-8">
+          {projects?.length ? (
+            <DataTable caption="Content projects" head={['Project', 'Product', 'Type', 'Channel', 'Status', 'Updated']}>
+              {projects.map((p) => (
+                <tr key={p.id} className="hover:bg-surface-2/40">
+                  <Td><Link href={`/admin/content/${p.id}`} className="font-semibold hover:text-accent">{p.title}</Link></Td>
+                  <Td>{(p.product as { name: string } | null)?.name ?? '—'}</Td>
+                  <Td className="text-xs">{label(p.content_type)}</Td><Td className="text-xs">{p.channel ? label(p.channel) : '—'}</Td>
+                  <Td><Badge tone={p.status === 'approved' ? 'green' : p.status === 'in_review' ? 'amber' : 'neutral'}>{label(p.status)}</Badge></Td>
+                  <Td className="text-xs text-muted">{fmtDate(p.updated_at)}</Td>
+                </tr>
+              ))}
+            </DataTable>
+          ) : <EmptyState icon={<Wand2 />} title="No content projects yet">Create one from a product to generate copy, designs and videos.</EmptyState>}
+
+          <section>
+            <h2 className="mb-3 flex items-center gap-2 font-semibold"><Film size={16} aria-hidden /> Render jobs</h2>
+            {jobs?.length ? (
+              <DataTable caption="Render jobs" head={['Job', 'Output', 'Status', 'Progress', 'Created', '']}>
+                {jobs.map((j) => (
+                  <tr key={j.id}>
+                    <Td className="font-mono text-xs">{j.id.slice(0, 8)}</Td>
+                    <Td className="text-xs">{j.output_format.toUpperCase()} {j.width}×{j.height}{j.duration_seconds ? ` · ${j.duration_seconds}s` : ''}</Td>
+                    <Td><Badge tone={j.status === 'completed' ? 'green' : j.status === 'failed' ? 'red' : j.status === 'processing' ? 'blue' : 'neutral'}>{j.status}</Badge>{j.error && <p className="mt-1 max-w-xs text-[11px] text-red-600">{j.error}</p>}</Td>
+                    <Td><div className="h-2 w-28 overflow-hidden rounded-full bg-surface-2" role="progressbar" aria-valuenow={j.progress} aria-valuemin={0} aria-valuemax={100}><div className="h-full bg-emerald" style={{ width: `${j.progress}%` }} /></div><p className="mt-1 text-[11px] text-muted">{j.progress}% · attempt {j.attempts}/{j.max_attempts}</p></Td>
+                    <Td className="text-xs text-muted">{fmtDate(j.created_at, true)}</Td>
+                    <Td>
+                      {j.status === 'completed' && j.output_asset_id && <a href={`/api/admin/assets/${j.output_asset_id}`} className="inline-flex items-center gap-1 text-xs font-semibold text-accent"><Download size={13} aria-hidden /> Download</a>}
+                      {w && ['queued', 'processing'].includes(j.status) && <ActionForm action={setJobStatus} className="" confirm="Cancel this render job?"><input type="hidden" name="id" value={j.id} /><input type="hidden" name="to" value="canceled" /><SubmitButton variant="ghost" className="min-h-[30px] text-xs">Cancel</SubmitButton></ActionForm>}
+                      {w && ['failed', 'canceled'].includes(j.status) && j.attempts < j.max_attempts && <ActionForm action={setJobStatus} className=""><input type="hidden" name="id" value={j.id} /><input type="hidden" name="to" value="queued" /><SubmitButton variant="ghost" className="min-h-[30px] text-xs">Retry</SubmitButton></ActionForm>}
+                    </Td>
+                  </tr>
+                ))}
+              </DataTable>
+            ) : <p className="text-sm text-muted">No render jobs yet. Videos are rendered by the background worker (see docs/RENDER_WORKER.md).</p>}
+          </section>
+
+          <section>
+            <h2 className="mb-3 font-semibold">Asset library</h2>
+            {assets?.length ? (
+              <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {assets.map((a) => (
+                  <li key={a.id} className="card p-4 text-sm">
+                    <p className="font-medium">{a.title}</p>
+                    <p className="mt-1 text-xs text-muted">{a.mime_type} · {a.width}×{a.height}{a.duration_seconds ? ` · ${a.duration_seconds}s` : ''} · {Math.round((a.file_size_bytes ?? 0) / 1024)} KB</p>
+                    <a href={`/api/admin/assets/${a.id}`} className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-accent"><Download size={13} aria-hidden /> Download</a>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-muted">Verified exports appear here.</p>}
+          </section>
+
+          <section>
+            <h2 className="mb-3 font-semibold">Upcoming calendar</h2>
+            {calendar?.length ? (
+              <ul className="divide-y divide-line rounded-2xl border border-line bg-surface">{calendar.map((c) => <li key={c.id} className="flex justify-between p-4 text-sm"><span>{(c.project as { title: string } | null)?.title} · {label(c.channel)}</span><span className="text-xs text-muted">{fmtDate(c.scheduled_at, true)} · {c.status}</span></li>)}</ul>
+            ) : <p className="text-sm text-muted">Nothing scheduled. Approved projects can be added to the calendar.</p>}
+          </section>
+        </div>
+        {w && (
+          <aside className="card h-fit p-6"><h2 className="font-semibold">New content project</h2>
+            <div className="mt-4"><ActionForm action={createProject}>
+              <TextInput name="title" label="Title" required maxLength={160} />
+              <SelectInput name="product_id" label="Product" options={[{ value: '', label: 'Select a product' }, ...(products ?? []).map((p) => ({ value: p.id, label: p.name }))]} />
+              <SelectInput name="content_type" label="Content type" options={['social_post', 'carousel', 'story', 'video', 'article_promo'].map((v) => ({ value: v, label: label(v) }))} />
+              <SelectInput name="objective" label="Objective" options={OBJECTIVES.map((v) => ({ value: v, label: label(v) }))} />
+              <SelectInput name="channel" label="Platform" options={PLATFORMS.map((v) => ({ value: v, label: label(v) }))} />
+              <SelectInput name="tone" label="Tone" options={TONES.map((v) => ({ value: v, label: label(v) }))} />
+              <TextInput name="audience" label="Audience" maxLength={160} hint="e.g. restaurant owners in Makassar" />
+              <SubmitButton>Create project</SubmitButton>
+            </ActionForm></div>
+          </aside>
+        )}
+      </div>
+    </>
+  );
 }
