@@ -1,0 +1,2 @@
+import Link from 'next/link';import { ArrowLeft } from 'lucide-react';
+export default function NotFound(){return <div className="grid min-h-[65vh] place-items-center px-5 text-center"><div><p className="text-xs font-bold uppercase tracking-[.2em] text-emerald">404 / Not found</p><h1 className="mt-4 text-5xl font-semibold tracking-tight text-forest">This page isn't here.</h1><p className="mt-4 text-sm text-slate-500">The page may have moved or the address may be incorrect.</p><Link href="/" className="btn-dark mt-8"><ArrowLeft size={15}/> Back to home</Link></div></div>}
