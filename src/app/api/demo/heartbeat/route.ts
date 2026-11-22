@@ -19,7 +19,7 @@ export async function POST(request: Request) {
       await clearDemoCookie();
       return NextResponse.json(hb, { status: 410, headers: { 'Cache-Control': 'no-store' } });
     }
-    const { product_id: _p, ...safe } = hb; // eslint-disable-line @typescript-eslint/no-unused-vars
+    const { product_id: _p, ...safe } = hb;
     return NextResponse.json(safe, { headers: { 'Cache-Control': 'no-store' } });
   } catch {
     return NextResponse.json({ status: 'error' }, { status: 503 });

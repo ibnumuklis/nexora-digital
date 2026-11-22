@@ -109,6 +109,7 @@ export default async function EditProduct({ params }: { params: Promise<{ id: st
                 const url = publicMediaUrl(md.storage_path);
                 return (
                   <figure key={md.id} className="overflow-hidden rounded-2xl border border-line">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     {url ? <img src={url} alt={md.alt_text ?? ''} className="aspect-video w-full object-cover" /> : <div className="grid aspect-video place-items-center bg-surface-2 text-xs text-muted">Private file</div>}
                     <figcaption className="flex items-center justify-between gap-2 p-3 text-xs"><span className="truncate">{md.alt_text}</span>{w && <ActionForm action={deleteMedia} className="" confirm="Delete this image permanently?"><input type="hidden" name="id" value={md.id} /><SubmitButton variant="ghost" className="min-h-[32px] text-xs text-red-600">Delete</SubmitButton></ActionForm>}</figcaption>
                   </figure>

@@ -33,6 +33,6 @@ export async function POST(request: Request) {
   }
   const s = data as unknown as DemoSessionPayload;
   await setDemoCookie(s.session_id, s.token, s.duration_seconds);
-  const { token: _omit, ...safe } = s; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const { token: _omit, ...safe } = s;
   return NextResponse.json({ session: safe }, { headers: { 'Cache-Control': 'no-store' } });
 }

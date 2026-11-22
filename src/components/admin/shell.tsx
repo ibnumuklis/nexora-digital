@@ -31,7 +31,7 @@ export function AdminShell({ nav, email, roleLabel, children }: { nav: { label: 
         })}
       </nav>
       <div className="mt-auto border-t border-white/10 pt-4">
-        <p className="truncate px-2 text-xs text-white/80" title={email}>{email}</p>
+        <Link href="/admin/account" className="block truncate px-2 text-xs text-white/80 hover:text-lime" title={email}>{email}</Link>
         <p className="px-2 text-[10px] uppercase tracking-wider text-lime">{roleLabel}</p>
         <div className="mt-3 flex items-center gap-1">
           <Link href="/" className="flex min-h-[40px] flex-1 items-center rounded-xl px-2 text-xs text-white/60 hover:bg-white/10">View website</Link>

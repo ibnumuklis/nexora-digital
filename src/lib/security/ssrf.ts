@@ -1,5 +1,6 @@
 import { lookup } from 'node:dns/promises';
 import { isIP } from 'node:net';
+import { Agent, fetch as undiciFetch } from 'undici';
 
 /**
  * SSRF guard for server-side integration health checks (ADR-005).
@@ -74,13 +75,28 @@ export type HealthResult = { result: 'healthy' | 'degraded' | 'offline' | 'block
 export async function checkHealth(raw: string, allowlist: string[], opts: { timeoutMs?: number; fetchImpl?: typeof fetch; resolver?: Parameters<typeof resolveSafeUrl>[2] } = {}): Promise<HealthResult> {
   const safe = await resolveSafeUrl(raw, allowlist, opts.resolver);
   if (!safe.ok) return { result: 'blocked', httpStatus: null, latencyMs: null, error: safe.reason };
-  const f = opts.fetchImpl ?? fetch;
+  // Re-validate addresses at connect time (prevents DNS rebinding between check and connect).
+  const dispatcher = new Agent({
+    connect: {
+      lookup: (hostname, options, cb) => {
+        lookup(hostname, { all: true, verbatim: true }).then((addrs) => {
+          const bad = addrs.find((a) => isPrivateAddress(a.address));
+          if (!addrs.length || bad) return cb(new Error('resolves_to_private_address'), '', 4);
+          if ((options as { all?: boolean } | undefined)?.all) return (cb as unknown as (e: null, a: typeof addrs) => void)(null, addrs);
+          cb(null, addrs[0].address, addrs[0].family);
+        }, (e) => cb(e as Error, '', 4));
+      },
+    },
+    headersTimeout: opts.timeoutMs ?? 5000,
+    bodyTimeout: opts.timeoutMs ?? 5000,
+  });
+  const f = opts.fetchImpl ?? (((url: string, init: RequestInit) => undiciFetch(url, { ...(init as object), dispatcher } as Parameters<typeof undiciFetch>[1])) as unknown as typeof fetch);
   const started = Date.now();
   const attempt = async (method: 'HEAD' | 'GET') => {
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), opts.timeoutMs ?? 5000);
     try {
-      const res = await f(safe.url.toString(), { method, redirect: 'manual', signal: ctrl.signal, headers: { 'user-agent': 'NEXORA-HealthCheck/1.0' }, cache: 'no-store' });
+      const res = await f(safe.url.toString(), { method, redirect: 'manual', signal: ctrl.signal, headers: { 'user-agent': 'NEXORA-HealthCheck/1.0' } });
       if (method === 'GET') await res.body?.cancel().catch(() => undefined);
       return res.status;
     } finally {
@@ -91,6 +107,7 @@ export async function checkHealth(raw: string, allowlist: string[], opts: { time
     let status = await attempt('HEAD');
     if (status === 405 || status === 501) status = await attempt('GET');
     const latencyMs = Date.now() - started;
+    void dispatcher.close();
     if (status >= 200 && status < 400) return { result: latencyMs > 2500 ? 'degraded' : 'healthy', httpStatus: status, latencyMs, error: null };
     return { result: status >= 500 ? 'offline' : 'degraded', httpStatus: status, latencyMs, error: `http_${status}` };
   } catch (e) {
