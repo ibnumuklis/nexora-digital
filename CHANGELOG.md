@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0] — 2026-11-22 — Public release (interim hosting)
+- Merged PR #1 to `main`; deployed to Vercel production: https://nexora-digital-jet.vercel.app (functions in Tokyo `hnd1`; previews protected by Vercel Authentication, production public).
+- Official logos (mark, wordmarks, icons, OG image) across site, admin and render templates.
+- Company identity (sole proprietorship, Makassar; email, WhatsApp) and final Privacy (UU PDP), Terms, Cookies and Demo disclaimer.
+- Provisional content for all 5 products (features, packages, FAQ, SEO) published; demos enabled in sandbox mode.
+- Migration `20261122123507_nexora_drop_duplicate_lead_owner_index` (applied live).
+- Free operations: `worker --once` + `.github/workflows/operations.yml` (render queue every 15 min when jobs exist, daily demo cleanup, uptime check).
+
 ## [0.2.0] — 2026-11-22 (branch `claude/nexora-production-readiness`, unreleased)
 
 ### Database (applied to live, additive)

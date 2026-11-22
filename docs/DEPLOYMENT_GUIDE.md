@@ -29,10 +29,15 @@
 ## 3. Database
 All migrations in `supabase/migrations/` are already applied to the live project (versions match file names). For a new environment apply them in order, then run `supabase/tests/rls_rpc_test.sql` (expected final message `ALL_TESTS_PASSED`).
 
-## 4. Deploy (Vercel example)
-1. Import the GitHub repository; framework preset Next.js; Node 22.
-2. Add the environment variables above for Production (and Preview with a staging Supabase project if available).
-3. Deploy a **preview** from the PR branch, run the smoke tests below, then promote only with owner approval.
+## 4. Deploy (Vercel — current)
+Project `nexora-digital` (team `ulfa-mafridoh`), Git-linked to `ibnumuklis/nexora-digital`; every push to `main` deploys production, PRs get protected previews.
+- Production URL: https://nexora-digital-jet.vercel.app · Functions region `hnd1` · Node 22.
+- Env (set): `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL` (production), `VISITOR_HASH_SALT` (sensitive). Never add the service-role key to Vercel.
+- Deployment protection: Vercel Authentication on previews only.
+- Custom domain later: Vercel → Project → Domains → add domain, set DNS, then update `NEXT_PUBLIC_SITE_URL` and Supabase Site URL/redirects and redeploy.
+
+## 4b. Operations (free)
+`.github/workflows/operations.yml` runs every 15 minutes: renders queued MP4 jobs (ffmpeg on the runner), daily demo cleanup, uptime check. Needs repo secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and variable `SITE_URL`; skips silently if absent.
 
 ## 5. Smoke tests after deploy
 ```bash
@@ -41,9 +46,9 @@ E2E_BASE_URL=https://<preview-url> npx playwright test tests/e2e/public.spec.ts 
 Manual: sign in as Super Admin → Overview loads → Products list shows the 5 drafts → Security page "Configuration checks" all green.
 
 ## 6. Going live checklist
-- [ ] Owner approved legal texts (privacy, terms, cookies, demo disclaimer) — remove "Draft" banner in `src/components/site/legal.tsx`.
+- [x] Legal texts final (draft banner removed).
 - [ ] At least one product verified and published via Admin.
 - [ ] `VISITOR_HASH_SALT` set; Security page checks green.
 - [ ] Custom SMTP configured if staff outside the Supabase team will sign in.
 - [ ] Backup export taken (`RUNBOOK.md`).
-- [ ] Owner's explicit production approval recorded in the PR.
+- [x] Owner's production approval (2026-11-22).

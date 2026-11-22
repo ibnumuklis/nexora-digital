@@ -33,3 +33,8 @@ Example `job.json` for local mode: see `.tmp`-style sample in `tests/unit/conten
 - `claim_render_job` uses `FOR UPDATE SKIP LOCKED` (safe with several workers) and re-queues jobs whose lock is older than 15 minutes.
 - Failures re-queue automatically until `max_attempts` (default 3), then the job is `failed` with a safe error message. Staff can cancel or retry within limits; they cannot mark a job completed (DB trigger).
 - Hosting options (owner decision & budget): a small VM/container (Railway, Render, Fly.io, a VPS) with ffmpeg. Vercel serverless functions are **not** suitable for video rendering.
+
+## Free hosting: GitHub Actions (current)
+`.github/workflows/operations.yml` runs `worker/render-worker.ts --once` on a free GitHub-hosted runner (public repo) every 15 minutes **only when jobs are queued** (plus 03:00 UTC daily for `demo_cleanup(30)` and on manual dispatch). `--once` processes the queue until empty (max `WORKER_MAX_MINUTES`, default 40), runs demo cleanup, then exits. Expect up to ~15 min latency for MP4 renders; PNG/JPG render instantly in the web app.
+
+Setup (owner): GitHub → Settings → Secrets and variables → Actions → New repository secret: `SUPABASE_URL` = `https://ijkazeukjooauwsvwtiq.supabase.co`, `SUPABASE_SERVICE_ROLE_KEY` = Supabase Dashboard → Project Settings → API Keys → secret/service_role. Then Actions → "Operations" → Run workflow to test.
