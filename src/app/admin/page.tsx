@@ -1,3 +1,62 @@
-import Link from 'next/link';import { ArrowUpRight,Eye,MousePointerClick,Users,Boxes,Activity } from 'lucide-react';import { products } from '@/lib/data';import { AdminPageTitle } from '@/components/admin-shell';
-const kpis=[['Product views','1,284','+12.8%',Eye],['Demo sessions','326','+8.4%',MousePointerClick],['New leads','24','+18.2%',Users],['Active products','05','Catalog items',Boxes]];
-export default function AdminHome(){return <><AdminPageTitle eyebrow="Workspace overview" title="Good afternoon, Admin" description="A snapshot of your digital product ecosystem. Numbers shown here are illustrative preview data."/><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">{kpis.map(([n,v,d,I]:any)=><div key={n} className="rounded-2xl border border-slate-200 bg-white p-5"><div className="flex items-center justify-between"><span className="text-xs text-slate-400">{n}</span><I size={17} className="text-emerald"/></div><p className="mt-4 text-3xl font-semibold text-forest">{v}</p><p className="mt-2 text-[10px] text-emerald">{d}</p></div>)}</div><div className="mt-6 grid gap-5 xl:grid-cols-[1.2fr_.8fr]"><div className="rounded-2xl border border-slate-200 bg-white p-6"><div className="flex items-center justify-between"><h2 className="font-semibold text-forest">Product portfolio</h2><Link href="/admin/products" className="text-xs font-semibold text-emerald">Manage products →</Link></div><div className="mt-5 divide-y divide-slate-100">{products.map(p=><div key={p.id} className="flex items-center justify-between gap-3 py-4"><div><p className="text-sm font-semibold text-forest">{p.name}</p><p className="mt-1 text-[10px] text-slate-400">{p.category}</p></div><span className="rounded-full bg-[#EAF4EC] px-3 py-1 text-[10px] font-semibold text-emerald">{p.status}</span></div>)}</div></div><div className="rounded-2xl border border-slate-200 bg-white p-6"><h2 className="font-semibold text-forest">Quick actions</h2><div className="mt-5 grid gap-3">{[['Review leads','/admin/leads',Users],['Create social content','/admin/content',Activity],['View analytics','/admin/analytics',Eye]].map(([n,h,I]:any)=><Link key={h} href={h} className="flex items-center justify-between rounded-xl bg-slate-50 p-4 text-sm font-medium text-forest hover:bg-[#EAF4EC]"><span className="flex items-center gap-3"><I size={17} className="text-emerald"/>{n}</span><ArrowUpRight size={15}/></Link>)}</div><p className="mt-6 text-xs leading-6 text-slate-400">Connect the production database and event pipeline to replace these sample indicators with verified analytics.</p></div></div></>}
+import Link from 'next/link';
+import { AlertTriangle, ArrowUpRight } from 'lucide-react';
+import { requirePagePermission } from '@/lib/auth/session';
+import { can, ROLE_LABELS } from '@/lib/auth/rbac';
+import { PageHeader, Alert } from '@/components/ui';
+import { StatCard, fmtDate } from '@/components/admin/table';
+
+export default async function AdminOverview({ searchParams }: { searchParams: Promise<{ denied?: string }> }) {
+  const ctx = await requirePagePermission('catalog.read');
+  const { denied } = await searchParams;
+  const db = ctx.supabase;
+  const head = { count: 'exact' as const, head: true };
+  const [products, published, drafts, leadsNew, inquiries, jobs, demosActive] = await Promise.all([
+    db.from('products').select('id', head),
+    db.from('products').select('id', head).eq('publication_status', 'published'),
+    db.from('products').select('id', head).eq('publication_status', 'draft'),
+    can(ctx.role, 'crm.read') ? db.from('leads').select('id', head).eq('status', 'new') : null,
+    can(ctx.role, 'crm.read') ? db.from('sales_inquiries').select('id', head).in('status', ['new', 'qualifying', 'drafting', 'pending_approval']) : null,
+    can(ctx.role, 'content.read') ? db.from('render_jobs').select('id', head).in('status', ['queued', 'processing']) : null,
+    can(ctx.role, 'demo.manage') ? db.from('demo_sessions').select('id', head).eq('status', 'active') : null,
+  ]);
+  const { data: followUps } = can(ctx.role, 'crm.read')
+    ? await db.from('leads').select('id,full_name,company,next_follow_up_at,status').not('next_follow_up_at', 'is', null).lte('next_follow_up_at', new Date(Date.now() + 2 * 86400000).toISOString()).not('status', 'in', '(won,lost)').order('next_follow_up_at').limit(6)
+    : { data: [] };
+  const { data: unverified } = await db.from('products').select('id,name,status').is('verified_at', null).order('name').limit(10);
+
+  return (
+    <>
+      <PageHeader eyebrow={ROLE_LABELS[ctx.role]} title="Overview" description="Live figures from the NEXORA database. Metrics appear only when real data exists." />
+      {denied && <Alert tone="warning" className="mb-6">Your role cannot open that section.</Alert>}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Products" value={products.count ?? 0} note={`${published.count ?? 0} published · ${drafts.count ?? 0} draft`} />
+        {leadsNew && <StatCard label="New leads" value={leadsNew.count ?? 0} note="Status: new" />}
+        {inquiries && <StatCard label="Open quotes & inquiries" value={inquiries.count ?? 0} />}
+        {jobs && <StatCard label="Render jobs in progress" value={jobs.count ?? 0} />}
+        {demosActive && <StatCard label="Active demo sessions" value={demosActive.count ?? 0} />}
+      </div>
+
+      <div className="mt-8 grid gap-6 lg:grid-cols-2">
+        {can(ctx.role, 'crm.read') && (
+          <section className="card p-6">
+            <h2 className="font-semibold">Follow-ups due (next 48h)</h2>
+            {followUps?.length ? (
+              <ul className="mt-4 divide-y divide-line">{followUps.map((l) => (
+                <li key={l.id} className="flex items-center justify-between py-3 text-sm"><Link href={`/admin/leads/${l.id}`} className="font-medium hover:text-accent">{l.full_name}{l.company && <span className="text-muted"> · {l.company}</span>}</Link><span className="text-xs text-muted">{fmtDate(l.next_follow_up_at, true)}</span></li>
+              ))}</ul>
+            ) : <p className="mt-3 text-sm text-muted">No follow-ups scheduled.</p>}
+          </section>
+        )}
+        <section className="card p-6">
+          <h2 className="flex items-center gap-2 font-semibold"><AlertTriangle size={16} className="text-amber-600" aria-hidden /> Products awaiting verification</h2>
+          <p className="mt-1 text-xs text-muted">A product can be published only after an admin verifies its facts, assets and URLs.</p>
+          {unverified?.length ? (
+            <ul className="mt-4 divide-y divide-line">{unverified.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-3 text-sm"><Link href={`/admin/products/${p.id}`} className="font-medium hover:text-accent">{p.name}</Link><ArrowUpRight size={14} className="text-muted" aria-hidden /></li>
+            ))}</ul>
+          ) : <p className="mt-3 text-sm text-muted">All products are verified.</p>}
+        </section>
+      </div>
+    </>
+  );
+}

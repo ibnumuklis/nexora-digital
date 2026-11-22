@@ -1,8 +1,17 @@
-import { AdminShell } from '@/components/admin-shell';
-import { AdminLogin,AdminAccessDenied,AdminSetupRequired } from '@/components/admin-gate';
-import { createSupabaseServerClient } from '@/lib/supabase/server';
-export const dynamic='force-dynamic';
-export default async function AdminLayout({children}:{children:React.ReactNode}){
- if(!process.env.NEXT_PUBLIC_SUPABASE_URL||!process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY)return <AdminSetupRequired/>;
- try{const supabase=await createSupabaseServerClient();const {data:{user}}=await supabase.auth.getUser();if(!user)return <AdminLogin/>;const {data:role}=await supabase.from('staff_members').select('role,is_active').eq('user_id',user.id).maybeSingle();if(!role || !role.is_active)return <AdminAccessDenied/>;return <AdminShell>{children}</AdminShell>;}catch{return <AdminSetupRequired/>;}
+import type { Metadata } from 'next';
+import { redirect } from 'next/navigation';
+import { AdminShell } from '@/components/admin/shell';
+import { getStaffContext, isStaff } from '@/lib/auth/session';
+import { ADMIN_NAV, can, ROLE_LABELS } from '@/lib/auth/rbac';
+import { publicEnv } from '@/lib/env';
+
+export const metadata: Metadata = { title: { default: 'Admin', template: '%s · NEXORA Admin' }, robots: { index: false, follow: false } };
+export const dynamic = 'force-dynamic';
+
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
+  if (!publicEnv()) redirect('/auth/login');
+  const ctx = await getStaffContext();
+  if (!isStaff(ctx)) redirect(ctx.reason === 'anonymous' ? '/auth/login?next=/admin' : '/auth/no-access');
+  const nav = ADMIN_NAV.filter((n) => can(ctx.role, n.permission)).map(({ label, href, icon }) => ({ label, href, icon }));
+  return <AdminShell nav={nav} email={ctx.email ?? ''} roleLabel={ROLE_LABELS[ctx.role]}>{children}</AdminShell>;
 }

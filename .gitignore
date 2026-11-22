@@ -7,3 +7,8 @@ out
 .vercel
 .DS_Store
 *.log
+tsconfig.tsbuildinfo
+/test-results
+/playwright-report
+/worker/out
+/.tmp

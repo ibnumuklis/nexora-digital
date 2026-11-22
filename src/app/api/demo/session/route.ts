@@ -1,24 +1,38 @@
 import { NextResponse } from 'next/server';
-import { createHash, randomBytes } from 'node:crypto';
-import { createClient } from '@supabase/supabase-js';
-export const runtime='nodejs';
-export async function POST(req:Request){
- try{
-  const {slug}=await req.json(); if(typeof slug!=='string'||slug.length>100)return NextResponse.json({error:'Invalid product.'},{status:400});
-  const url=process.env.NEXT_PUBLIC_SUPABASE_URL,key=process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if(!url||!key)return NextResponse.json({error:'Demo session service is not configured.'},{status:503});
-  const db=createClient(url,key,{auth:{persistSession:false}});
-  const {data:product,error:productError}=await db.from('products').select('id,slug').eq('slug',slug).eq('publication_status','published').maybeSingle();
-  if(productError||!product)return NextResponse.json({error:'Product is not available for live demo.'},{status:404});
-  const {data:policy,error:policyError}=await db.from('demo_policies').select('*').eq('product_id',product.id).eq('enabled',true).maybeSingle();
-  if(policyError||!policy)return NextResponse.json({error:'Live demo has not been enabled for this product.'},{status:403});
-  const userAgent=req.headers.get('user-agent')||'unknown';const forwarded=req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()||'unknown';const visitorHash=createHash('sha256').update(userAgent+'|'+forwarded).digest('hex');
-  const {count}=await db.from('demo_sessions').select('id',{count:'exact',head:true}).eq('visitor_hash',visitorHash).eq('status','active').gt('expires_at',new Date().toISOString());
-  if((count||0)>=policy.max_active_sessions_per_visitor)return NextResponse.json({error:'An active demo session already exists.'},{status:429});
-  const token=randomBytes(32).toString('base64url');const tokenHash=createHash('sha256').update(token).digest('hex');const expiresAt=new Date(Date.now()+policy.duration_seconds*1000).toISOString();
-  const {data:session,error}=await db.from('demo_sessions').insert({product_id:product.id,token_hash:tokenHash,visitor_hash:visitorHash,expires_at:expiresAt}).select('id,started_at,expires_at').single();
-  if(error||!session)throw error||new Error('Could not create session');
-  await db.from('demo_activity_logs').insert({session_id:session.id,event_type:'session_started'});
-  return NextResponse.json({sessionId:session.id,token,startedAt:session.started_at,expiresAt,durationSeconds:policy.duration_seconds,watermark:policy.watermark_text},{headers:{'Cache-Control':'no-store'}});
- }catch{return NextResponse.json({error:'Unable to create demo session.'},{status:500});}
+import { z } from 'zod';
+import { clientIp, isSameOrigin, readJson, visitorHash } from '@/lib/http/request';
+import { rateLimit } from '@/lib/http/rate-limit';
+import { createSupabasePublicClient } from '@/lib/supabase/server';
+import { DEMO_ERRORS, setDemoCookie, type DemoSessionPayload } from '@/lib/demo/server';
+import { publicEnv } from '@/lib/env';
+
+export const runtime = 'nodejs';
+const schema = z.object({ slug: z.string().max(100).regex(/^[a-z0-9]+(-[a-z0-9]+)*$/) });
+
+/** Start a demo session. The raw token goes only into an HttpOnly cookie, never to page JS. */
+export async function POST(request: Request) {
+  if (!isSameOrigin(request)) return NextResponse.json({ code: 'invalid', error: 'Invalid origin.' }, { status: 403 });
+  if (!publicEnv()) return NextResponse.json({ code: 'not_configured', error: 'Demo service is not configured.' }, { status: 503 });
+  const vh = visitorHash(request.headers);
+  if (!vh) return NextResponse.json({ code: 'not_configured', error: 'Demo service is not configured.' }, { status: 503 });
+  if (!rateLimit(`demo:${clientIp(request.headers)}`, 6, 60 * 60_000).allowed) {
+    return NextResponse.json({ code: 'rate_limited', error: DEMO_ERRORS.rate_limited.message }, { status: 429 });
+  }
+  let body;
+  try {
+    body = schema.safeParse(await readJson(request, 1024));
+  } catch {
+    return NextResponse.json({ code: 'invalid', error: 'Invalid request.' }, { status: 400 });
+  }
+  if (!body.success) return NextResponse.json({ code: 'invalid', error: 'Invalid product.' }, { status: 400 });
+
+  const { data, error } = await createSupabasePublicClient().rpc('demo_start', { p_slug: body.data.slug, p_visitor_hash: vh });
+  if (error || !data) {
+    const mapped = error ? DEMO_ERRORS[error.message] : undefined;
+    return NextResponse.json({ code: mapped?.code ?? 'network', error: mapped?.message ?? 'The demo service is temporarily unavailable.' }, { status: mapped?.status ?? 503 });
+  }
+  const s = data as unknown as DemoSessionPayload;
+  await setDemoCookie(s.session_id, s.token, s.duration_seconds);
+  const { token: _omit, ...safe } = s; // eslint-disable-line @typescript-eslint/no-unused-vars
+  return NextResponse.json({ session: safe }, { headers: { 'Cache-Control': 'no-store' } });
 }
