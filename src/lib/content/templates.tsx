@@ -15,6 +15,8 @@ export type DesignInput = {
   slideTotal?: number;
   imageDataUri?: string | null;
   footer?: string;
+  /** Official logo mark as data URI (injected by the renderer). */
+  brandMarkUri?: string | null;
 };
 
 export function sanitizeDesign(input: DesignInput): DesignInput {
@@ -31,14 +33,15 @@ export function sanitizeDesign(input: DesignInput): DesignInput {
     slideTotal: input.slideTotal,
     imageDataUri: input.imageDataUri && /^data:image\/(png|jpeg|webp);base64,/.test(input.imageDataUri) ? input.imageDataUri : null,
     footer: clip(input.footer, 60) || 'NEXORA DIGITAL · Build. Innovate. Transform.',
+    brandMarkUri: input.brandMarkUri && input.brandMarkUri.startsWith('data:image/png;base64,') ? input.brandMarkUri : null,
   };
 }
 
-function Logo({ color, bg, size }: { color: string; bg: string; size: number }) {
+function Logo({ markUri, color, size }: { markUri?: string | null; color: string; size: number }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: size * 0.4 }}>
-      <div style={{ display: 'flex', width: size, height: size, borderRadius: size * 0.28, background: bg, alignItems: 'center', justifyContent: 'center', color, fontSize: size * 0.55, fontWeight: 700 }}>N</div>
-      <div style={{ display: 'flex', fontSize: size * 0.42, letterSpacing: size * 0.04, fontWeight: 700 }}>NEXORA DIGITAL</div>
+    <div style={{ display: 'flex', alignItems: 'center', gap: size * 0.35 }}>
+      {markUri ? <img src={markUri} alt="" style={{ height: size, width: size * 2.08 }} /> : null}
+      <div style={{ display: 'flex', fontSize: size * 0.42, letterSpacing: size * 0.04, fontWeight: 700, color }}>NEXORA DIGITAL</div>
     </div>
   );
 }
@@ -55,7 +58,7 @@ export function renderTemplate(raw: DesignInput, width: number, height: number):
 
   const header = (
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: t.fg }}>
-      <Logo color={d.theme === 'lime' ? '#C5F36B' : '#102C25'} bg={d.theme === 'lime' ? '#102C25' : '#C5F36B'} size={56 * u} />
+      <Logo markUri={d.brandMarkUri} color={t.fg} size={52 * u} />
       {d.template === 'carousel-slide' && d.slideIndex ? <div style={{ display: 'flex', fontSize: 30 * u, color: t.muted }}>{`${d.slideIndex}/${d.slideTotal ?? d.slideIndex}`}</div> : d.productName ? <div style={{ display: 'flex', fontSize: 28 * u, color: t.muted }}>{d.productName}</div> : <div style={{ display: 'flex' }} />}
     </div>
   );

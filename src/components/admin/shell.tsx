@@ -16,7 +16,7 @@ export function AdminShell({ nav, email, roleLabel, children }: { nav: { label: 
   const sidebar = (
     <div className="flex h-full flex-col">
       <Link href="/admin" className="flex items-center gap-3 px-2">
-        <LogoMark size={36} />
+        <LogoMark height={22} />
         <span><b className="block font-display text-xs tracking-[.16em]">NEXORA</b><small className="text-[9px] tracking-[.2em] text-white/65">CONTROL CENTER</small></span>
       </Link>
       <nav aria-label="Admin" className="mt-8 grid gap-0.5 overflow-y-auto">
@@ -45,7 +45,7 @@ export function AdminShell({ nav, email, roleLabel, children }: { nav: { label: 
     <div className="min-h-screen bg-bg lg:grid lg:grid-cols-[250px_1fr]">
       <aside className="sticky top-0 hidden h-screen bg-forest p-5 text-white lg:block">{sidebar}</aside>
       <div className="flex items-center justify-between bg-forest px-4 py-3 text-white lg:hidden">
-        <Link href="/admin" className="flex items-center gap-2"><LogoMark size={30} /><b className="font-display text-xs tracking-[.16em]">NEXORA ADMIN</b></Link>
+        <Link href="/admin" className="flex items-center gap-2"><LogoMark height={20} /><b className="font-display text-xs tracking-[.16em]">NEXORA ADMIN</b></Link>
         <button onClick={() => setOpen(true)} className="grid h-11 w-11 place-items-center" aria-label="Open navigation" aria-expanded={open}><Menu /></button>
       </div>
       {open && (

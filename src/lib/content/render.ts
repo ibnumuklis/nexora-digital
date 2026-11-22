@@ -25,10 +25,16 @@ function fonts() {
   return fontsPromise;
 }
 
+let markPromise: Promise<string | null> | null = null;
+function brandMark() {
+  markPromise ??= readFile(path.join(process.cwd(), 'public/brand/mark.png')).then((b) => `data:image/png;base64,${b.toString('base64')}`).catch(() => null);
+  return markPromise;
+}
+
 export type RenderedImage = { buffer: Buffer; mime: 'image/png' | 'image/jpeg'; width: number; height: number; bytes: number; sha256: string };
 
 export async function renderDesign(input: DesignInput, width: number, height: number, format: 'png' | 'jpg' = 'png'): Promise<RenderedImage> {
-  const svg = await satori(renderTemplate(input, width, height), { width, height, fonts: await fonts() });
+  const svg = await satori(renderTemplate({ ...input, brandMarkUri: input.brandMarkUri ?? (await brandMark()) }, width, height), { width, height, fonts: await fonts() });
   const png = new Resvg(svg, { fitTo: { mode: 'width', value: width }, font: { loadSystemFonts: false } }).render().asPng();
   const buffer = format === 'jpg' ? await sharp(png).flatten({ background: '#ffffff' }).jpeg({ quality: 90, mozjpeg: true }).toBuffer() : Buffer.from(png);
   const meta = await sharp(buffer).metadata();

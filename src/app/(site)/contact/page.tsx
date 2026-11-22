@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
-import { Clock, Mail, ShieldCheck } from 'lucide-react';
+import { Clock, Mail, MapPin, MessageCircle, ShieldCheck } from 'lucide-react';
+import { COMPANY } from '@/lib/company';
 import { getPublishedProducts } from '@/lib/catalog';
 import { INQUIRY_TYPES } from '@/lib/validation/forms';
 import { PageHero } from '@/components/site/sections';
@@ -23,6 +24,12 @@ export default async function ContactPage({ searchParams }: { searchParams: SP }
       <section className="section-pad">
         <div className="container-shell grid gap-10 lg:grid-cols-[.7fr_1.3fr]">
           <aside className="grid gap-4 self-start">
+            <div className="card grid gap-3 p-5 text-sm">
+              <h2 className="font-semibold">Reach us directly</h2>
+              <a href={`mailto:${COMPANY.email}`} className="flex items-center gap-3 hover:text-accent"><Mail size={16} className="text-accent" aria-hidden />{COMPANY.email}</a>
+              <a href={COMPANY.whatsappUrl} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 hover:text-accent"><MessageCircle size={16} className="text-accent" aria-hidden />WhatsApp {COMPANY.phoneDisplay}</a>
+              <p className="flex items-center gap-3 text-muted"><MapPin size={16} className="text-accent" aria-hidden />{COMPANY.city}, {COMPANY.province}, {COMPANY.country}</p>
+            </div>
             {[
               { I: Clock, t: 'Response time', d: 'We aim to reply within two business days.' },
               { I: ShieldCheck, t: 'Your data', d: 'Used only to answer your request. Marketing emails only with separate consent.' },

@@ -26,12 +26,13 @@ test.describe('public website', () => {
       await expect(page.getByRole('heading', { level: 1 }), path).toHaveCount(1);
     }
     await page.goto('/privacy');
-    await expect(page.getByText('Draft — pending owner and legal review')).toBeVisible();
+    await expect(page.getByText('nexoracreativedigital@gmail.com').first()).toBeVisible();
+    await expect(page.getByText(/UU PDP|Personal Data Protection Law/).first()).toBeVisible();
   });
 
-  test('draft products and their demos are not public', async ({ page }) => {
-    expect((await page.goto('/products/waroeng-suramadu-erp'))?.status()).toBe(404);
-    expect((await page.goto('/demo/edu-admin'))?.status()).toBe(404);
+  test('unknown or unpublished products and their demos are not public', async ({ page }) => {
+    expect((await page.goto('/products/not-a-published-product'))?.status()).toBe(404);
+    expect((await page.goto('/demo/not-a-published-product'))?.status()).toBe(404);
     await expect(page.getByRole('heading', { name: /isn.t here/ })).toBeVisible();
   });
 
@@ -115,7 +116,7 @@ test.describe('public website', () => {
     expect(robots).toContain('Sitemap:');
     const sitemap = await (await request.get('/sitemap.xml')).text();
     expect(sitemap).toContain('/products');
-    expect(sitemap).not.toContain('waroeng-suramadu-erp'); // drafts excluded
+    expect(sitemap).not.toContain('not-a-published-product');
     await page.goto('/pricing');
     await expect(page.locator('link[rel="canonical"]')).toHaveAttribute('href', /\/pricing$/);
   });

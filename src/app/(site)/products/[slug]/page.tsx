@@ -108,6 +108,8 @@ export default async function ProductDetail({ params }: { params: P }) {
               </div>
             )}
 
+            <p className="mt-12 rounded-2xl bg-surface-2/60 p-4 text-xs leading-6 text-muted">Product information is updated as development progresses. Features, availability and commercial terms are confirmed in a written proposal — <Link href={`/contact?type=consultation&product=${p.slug}`} className="font-semibold text-accent">contact us</Link> for the current scope.</p>
+
             {faq.length > 0 && (
               <div className="mt-12"><h2 className="text-2xl font-semibold">FAQ</h2>
                 <div className="mt-5 divide-y divide-line rounded-2xl border border-line bg-surface">{faq.map((f) => (
