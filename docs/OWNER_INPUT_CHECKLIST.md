@@ -1,31 +1,26 @@
-# NEXORA DIGITAL — Owner Input Checklist
+# NEXORA DIGITAL — Owner Input Checklist (updated 2026-11-22)
 
-This list is intentionally separated from engineering work so Claude can complete independent tasks first.
+Engineering work that does not depend on these items is complete. Items are ordered by impact.
 
-## Needed before public launch
-- [ ] Confirm official domain and DNS access.
-- [ ] Confirm hosting provider/project and production environment.
-- [ ] Confirm legal business/contact details.
-- [ ] Approve Privacy Policy, Terms of Service, cookie/analytics notice, and demo disclaimer.
-- [ ] Confirm official logo and brand asset files.
-- [ ] Approve each product's public name, description, features, target audience, status, pricing model, and claims.
-- [ ] Supply verified product URLs and separate demo URLs/environments.
-- [ ] Supply approved screenshots, videos, icons, and product-specific brand assets.
-- [ ] Confirm admin email and MFA requirement.
+## A. To finish verification (quick)
+- [ ] **Enable live tests** — either add GitHub repository secrets `E2E_SUPABASE_URL` (`https://ijkazeukjooauwsvwtiq.supabase.co`) and `E2E_SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets → Actions; never paste the key in chat), **or** allow the domain `ijkazeukjooauwsvwtiq.supabase.co` for this Claude workspace (claude.ai → Settings → Capabilities). This runs the live authentication/session/password suite.
+- [ ] Supabase Dashboard → Authentication → URL Configuration: Site URL + Redirect URL `<site>/auth/callback` (and `http://localhost:3000/auth/callback`).
+- [ ] Authentication → Providers → Email → Minimum password length **12**.
+- [ ] Custom SMTP (needed to email staff who are not Supabase team members).
+- [ ] Decide whether to enforce TOTP MFA for admin roles.
 
-## Needed to activate optional integrations
-- [ ] Choose AI provider and approve monthly usage budget.
-- [ ] Choose image generation provider if separate from text AI.
-- [ ] Approve video rendering worker hosting/budget.
-- [ ] Choose rate-limit/Redis service if required.
-- [ ] Decide whether payment gateway is in scope for first release.
-- [ ] Provide WhatsApp/email integration provider only if outbound messaging is explicitly desired.
+## B. Before public launch
+- [ ] Official domain & DNS access; hosting for web app (recommended Vercel) and for the render worker (container/VM with ffmpeg).
+- [ ] Legal entity, address, contact email; approve Privacy Policy, Terms, Cookie policy, Demo disclaimer (drafts in the site).
+- [ ] Official logo/brand files (current mark is a placeholder "N" monogram in brand colours).
+- [ ] Per product (Waroeng Suramadu ERP, Marcom Command Center, EDU ADMIN, EDUCLASS, AI Content Repurposing Studio): approved description, features, audience, stage, pricing model/packages, screenshots, product URL, demo approach (sandbox or isolated demo URL), then **Verify → Publish** in Admin.
+- [ ] Verified product domains for `INTEGRATION_ALLOWED_HOSTS`; isolated demo hosts for `DEMO_IFRAME_HOSTS`.
+- [ ] Explicit production deployment approval.
 
-## Product verification
-- [ ] Waroeng Suramadu ERP — actual production URL, demo URL, confirmed modules, readiness status.
-- [ ] Marcom Command Center — actual production URL, demo URL, confirmed modules, readiness status.
-- [ ] EDU ADMIN — actual production URL, demo URL, confirmed modules, readiness status.
-- [ ] EDUCLASS — actual production URL, demo URL, confirmed modules, readiness status.
-- [ ] AI Content Repurposing Studio — actual production URL, demo URL, confirmed capabilities, readiness status.
-
-Do not publish draft products or enable public demos until the corresponding items have been verified.
+## C. Optional integrations (disabled until approved)
+- [ ] AI provider + monthly budget (copy generation currently uses the deterministic rules-v1 generator).
+- [ ] Error monitoring provider; uptime monitor.
+- [ ] Redis/edge rate limiting (DB limits already active).
+- [ ] Payment gateway (out of scope; no payments are processed).
+- [ ] Outbound email/WhatsApp integration (not enabled; CRM logs contacts manually).
+- [ ] Customer testimonials/case studies with written permission.

@@ -98,3 +98,13 @@ REDIS_URL=DO_NOT_COMMIT
 ```
 
 Do not add any real secret values to this file. Use `.env.local` and deployment secret manager.
+
+---
+
+## Reconciliation completed — 2026-11-22 (Claude)
+- Live inspection showed **5** applied migrations (not 4). All 5 are now stored verbatim in `supabase/migrations/`; the never-applied `0001/0002` files are archived in `supabase/legacy_unapplied/`.
+- Three additive migrations were applied with owner approval: `20261122103703_nexora_rbac_audit_hardening`, `20261122104234_nexora_modules_crm_demo_content_analytics`, `20261122114338_nexora_lead_score_search_path`. No table, column or row was dropped; only policies were replaced (tightened).
+- Canonical column names used by the code: `staff_members`, `private.is_nexora_staff()/has_nexora_role()`, `session_token_hash`, `full_name`, `need_description`, `consent_marketing` (+ new `privacy_consent`), `duration_minutes`, `is_public`, `content_project_id`. TypeScript types are generated from live: `src/lib/supabase/database.types.ts`.
+- RLS/RBAC verified with `supabase/tests/rls_rpc_test.sql` (anon, non-staff, every staff role, service_role) — result `ALL_TESTS_PASSED`, all changes rolled back.
+- Storage: `nexora-assets` (private, staff) and new `nexora-public` (public images only, writes by content team).
+- See `docs/adr/README.md` and `docs/audit/ACCEPTANCE_REPORT.md`.

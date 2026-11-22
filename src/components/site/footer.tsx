@@ -30,7 +30,7 @@ export function Footer() {
         ))}
       </div>
       <div className="border-t border-white/10">
-        <div className="container-shell flex flex-col justify-between gap-3 py-6 text-xs text-white/45 sm:flex-row sm:items-center">
+        <div className="container-shell flex flex-col justify-between gap-3 py-6 text-xs text-white/65 sm:flex-row sm:items-center">
           <span>© {new Date().getFullYear()} NEXORA DIGITAL. All rights reserved.</span>
           <div className="flex items-center gap-5">
             <CookieSettingsLink />

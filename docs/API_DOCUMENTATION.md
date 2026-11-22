@@ -1,40 +1,35 @@
-# API Documentation — NEXORA DIGITAL
+# API documentation — NEXORA DIGITAL
 
-All endpoints are same-origin Next.js route handlers. Public endpoints validate input and must be protected by production-grade rate limiting before launch. Admin endpoints verify Supabase Auth and staff role on the server, while database RLS remains authoritative.
+All endpoints are same-origin Next.js route handlers (Node runtime). State-changing public endpoints reject cross-origin requests (`Origin` check → 403). Bodies are size-limited and validated with zod. Database functions re-validate everything (defence in depth).
 
-## Public endpoints
+## Public HTTP endpoints
+| Method & path | Purpose | Notes |
+|---|---|---|
+| `POST /api/inquiries` | Contact / quote / consultation / custom development / partner forms | Body: `full_name, email, phone?, company?, industry?, product_slug?, inquiry_type, source, message, budget_range?, timeline?, privacy_consent: true, marketing_consent?, website (honeypot)`. App limit 5 / 10 min / IP; DB limits 3/h/email, 5/h/visitor, 300/h global. Responses: `200 {ok}`, `400 {error, fieldErrors}`, `429`, `503`. Never returns record ids. |
+| `POST /api/events` | Consent-aware analytics | Only accepted when cookie `nx_consent=analytics`; otherwise `204` and nothing stored. Allowlisted events; query strings stripped. |
+| `POST /api/demo/session` | Start demo `{slug}` | Requires published product with demo enabled. Sets HttpOnly `nx_demo` cookie (token never exposed to JS). Errors: `404 unavailable`, `409 active_session`, `429 rate_limited`, `503 capacity`/`not_configured`. |
+| `POST /api/demo/heartbeat` | Validate session `{activity: boolean}` | Server time authoritative; `410` when expired/idle/revoked. |
+| `POST /api/demo/end` | End session | Idempotent. |
+| `GET /api/demo/sandbox?product=&module=m0..m7` | Synthetic sandbox data | Re-validates session + product scope on every request. |
+| `GET /auth/callback` | Email confirmation, magic link, recovery | Supports `?code=` (PKCE) and `?token_hash=&type=`. Same-site `next` only. |
 
-### `POST /api/leads`
-Accepts `name`, `email`, `company`, `interest`, `message`, and required `consent: "yes"`. Writes a lead using server-only Supabase service credentials. Requires `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`. Includes a small in-memory request throttle; replace with a distributed Redis/edge limiter in production.
+## Admin HTTP endpoints (authenticated + role-checked on the server; RLS applies)
+| Method & path | Permission | Notes |
+|---|---|---|
+| `GET /api/admin/leads/export?status=&mine=` | `crm.export` (super_admin, admin, sales_manager) | CSV (formula-injection safe), audited as `lead_export`. |
+| `GET /api/admin/content/preview?project=&format=` | `content.read` | PNG preview rendered by the export engine. |
+| `GET /api/admin/assets/:id` | `content.read` | 302 to a 60-second signed URL only if the asset is `ready` and the file exists. |
 
-### `POST /api/analytics`
-Accepts allowlisted event names: `page_view`, `product_view`, `demo_cta_click`, `contact_cta_click`. Stores basic event metadata when Supabase is configured. Instrumentation is not yet connected to every page.
+Admin mutations use **Server Actions** (`src/app/admin/**/actions.ts`) wrapped by `runAction(permission, zodSchema, …)`.
 
-### `POST /api/demo/session`
-Accepts `{ "slug": "product-slug" }`. Requires a published product and enabled demo policy. Creates a short-lived random token, stores only its SHA-256 hash, and returns the raw token once. Uses server-only service credentials.
-
-### `POST /api/demo/session/:id/heartbeat`
-Accepts `{ "token": "..." }`. Validates token, expiry and idle policy; updates last activity.
-
-### `POST /api/demo/session/:id/end`
-Accepts `{ "token": "..." }`. Marks an active session completed.
-
-## Admin endpoints
-
-All require an authenticated Supabase user with an allowed row in `public.user_roles`.
-
-- `GET /api/admin/products` — list products with categories and features.
-- `POST /api/admin/products` — create a draft product.
-- `PATCH /api/admin/products/:id` — update allowed product fields.
-- `DELETE /api/admin/products/:id` — delete a product; review dependencies before use.
-- `GET /api/admin/leads` — list up to 200 recent leads for authorised staff.
-- `GET /api/admin/content` — list recent content projects.
-- `POST /api/admin/content` — create a content project.
-
-## Security notes
-
-- Never send the service role key to a browser.
-- Admin API routes independently verify the user and role.
-- Validate request body size and schema in production.
-- Add distributed rate limits, CAPTCHA/abuse checks, audit events and observability.
-- The demo session lifecycle is scaffolding; a real product proxy must validate the token on every protected request.
+## Database RPC (PostgREST)
+| Function | Callable by | Purpose |
+|---|---|---|
+| `submit_inquiry(p jsonb)` | anon, authenticated | Only public write path into `leads` / `sales_inquiries`. Dedupes open leads by email (90 days), rule-based score with reasons. |
+| `track_event(...)` | anon, authenticated | Only public write path into `analytics_events` (demo_* events cannot be forged). |
+| `demo_start / demo_heartbeat / demo_end` | anon, authenticated | Demo lifecycle with hashed tokens, capacity and rate limits. |
+| `demo_admin_revoke(uuid)`, `demo_cleanup(int)` | admins (checked inside) | Monitoring & retention. |
+| `analytics_overview(int)` | authenticated (SECURITY INVOKER → RLS) | Dashboard aggregates. |
+| `staff_directory()`, `grant_staff_role(email, role)` | admins / super_admin (checked inside) | Staff management. |
+| `log_audit_event(...)` | staff | Explicit audit entries (exports, erasures, evidence). |
+| `claim_render_job`, `update_render_progress`, `complete_render_job`, `fail_render_job` | service_role only | Render worker. |

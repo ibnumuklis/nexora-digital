@@ -36,8 +36,7 @@ export function track(event: TrackEvent, data: { productSlug?: string; metadata?
   if (typeof document === 'undefined' || readConsent() !== 'analytics') return;
   const body = JSON.stringify({ event, path: location.pathname, productSlug: data.productSlug, sessionHash: sessionId(), source: document.referrer ? new URL(document.referrer).hostname.slice(0, 80) : 'direct', metadata: data.metadata ?? {} });
   try {
-    if (navigator.sendBeacon) navigator.sendBeacon('/api/events', new Blob([body], { type: 'application/json' }));
-    else void fetch('/api/events', { method: 'POST', body, headers: { 'content-type': 'application/json' }, keepalive: true });
+    void fetch('/api/events', { method: 'POST', body, headers: { 'content-type': 'application/json' }, keepalive: true, credentials: 'same-origin' }).catch(() => undefined);
   } catch {}
 }
 

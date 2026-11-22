@@ -68,7 +68,7 @@ export default async function ProductDetail({ params }: { params: P }) {
                 Request a quote <ArrowUpRight size={15} aria-hidden />
               </TrackedLink>
             </div>
-            {p.demo_enabled && <p className="mt-4 flex items-center gap-2 text-xs text-white/55"><ShieldCheck size={14} aria-hidden /> Timed demo session on synthetic sample data.</p>}
+            {p.demo_enabled && <p className="mt-4 flex items-center gap-2 text-xs text-white/65"><ShieldCheck size={14} aria-hidden /> Timed demo session on synthetic sample data.</p>}
           </div>
           <div className="overflow-hidden rounded-3xl border border-white/10 shadow-2xl"><ProductVisual product={p} className="h-72 sm:h-80" /></div>
         </div>

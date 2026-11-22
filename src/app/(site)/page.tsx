@@ -41,14 +41,14 @@ export default async function Home() {
             <div className="relative rounded-[30px] border border-white/15 bg-white/[.06] p-4 shadow-2xl backdrop-blur">
               <div className="flex items-center justify-between border-b border-white/10 px-3 pb-4">
                 <div className="flex gap-1.5"><i className="h-2 w-2 rounded-full bg-rose-300" /><i className="h-2 w-2 rounded-full bg-amber-300" /><i className="h-2 w-2 rounded-full bg-lime" /></div>
-                <span className="text-[9px] tracking-[.2em] text-white/45">NEXORA STUDIO</span><span />
+                <span className="text-[9px] tracking-[.2em] text-white/65">NEXORA STUDIO</span><span />
               </div>
               <div className="grid grid-cols-2 gap-3 p-3">
                 {[{ I: Layers3, n: 'Products', d: 'SaaS & licensed software' }, { I: Code2, n: 'Development', d: 'Custom systems' }, { I: Sparkles, n: 'Creative', d: 'Product storytelling' }, { I: Workflow, n: 'Integration', d: 'Connected tools' }].map((x) => (
                   <div key={x.n} className="rounded-2xl border border-white/10 bg-white/[.04] p-5">
                     <x.I className="text-lime" size={22} />
                     <p className="mt-4 text-sm font-semibold">{x.n}</p>
-                    <p className="mt-1 text-[11px] text-white/50">{x.d}</p>
+                    <p className="mt-1 text-[11px] text-white/65">{x.d}</p>
                   </div>
                 ))}
               </div>

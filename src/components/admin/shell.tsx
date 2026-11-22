@@ -17,7 +17,7 @@ export function AdminShell({ nav, email, roleLabel, children }: { nav: { label: 
     <div className="flex h-full flex-col">
       <Link href="/admin" className="flex items-center gap-3 px-2">
         <LogoMark size={36} />
-        <span><b className="block font-display text-xs tracking-[.16em]">NEXORA</b><small className="text-[9px] tracking-[.2em] text-white/50">CONTROL CENTER</small></span>
+        <span><b className="block font-display text-xs tracking-[.16em]">NEXORA</b><small className="text-[9px] tracking-[.2em] text-white/65">CONTROL CENTER</small></span>
       </Link>
       <nav aria-label="Admin" className="mt-8 grid gap-0.5 overflow-y-auto">
         {nav.map((n) => {

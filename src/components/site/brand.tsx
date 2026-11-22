@@ -15,7 +15,7 @@ export function Logo({ tone = 'light', sub = 'TECHNOLOGY & PRODUCT STUDIO' }: { 
       <LogoMark />
       <span className="leading-tight">
         <b className={`block font-display text-[15px] tracking-[.14em] ${tone === 'light' ? 'text-white' : 'text-fg'}`}>NEXORA DIGITAL</b>
-        <small className={`text-[9px] tracking-[.22em] ${tone === 'light' ? 'text-white/55' : 'text-muted'}`}>{sub}</small>
+        <small className={`hidden whitespace-nowrap text-[9px] tracking-[.22em] sm:block ${tone === 'light' ? 'text-white/65' : 'text-muted'}`}>{sub}</small>
       </span>
     </Link>
   );
