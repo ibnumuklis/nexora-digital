@@ -4,18 +4,20 @@ Engineering work that does not depend on these items is complete. Items are orde
 
 ## A. To finish verification (quick)
 - [ ] **Enable live tests** — either add GitHub repository secrets `E2E_SUPABASE_URL` (`https://ijkazeukjooauwsvwtiq.supabase.co`) and `E2E_SUPABASE_SERVICE_ROLE_KEY` (Settings → Secrets → Actions; never paste the key in chat), **or** allow the domain `ijkazeukjooauwsvwtiq.supabase.co` for this Claude workspace (claude.ai → Settings → Capabilities). This runs the live authentication/session/password suite.
-- [ ] Supabase Dashboard → Authentication → URL Configuration: Site URL + Redirect URL `<site>/auth/callback` (and `http://localhost:3000/auth/callback`).
+- [ ] Supabase Dashboard → Authentication → URL Configuration: Site URL `https://nexora-digital-jet.vercel.app`; Redirect URLs `https://nexora-digital-jet.vercel.app/auth/callback` and `http://localhost:3000/auth/callback`.
+- [ ] GitHub → Settings → Secrets and variables → Actions: secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`; variable `SITE_URL=https://nexora-digital-jet.vercel.app` (enables the free render worker, demo cleanup and uptime check).
 - [ ] Authentication → Providers → Email → Minimum password length **12**.
 - [ ] Custom SMTP (needed to email staff who are not Supabase team members).
 - [ ] Decide whether to enforce TOTP MFA for admin roles.
 
 ## B. Before public launch
-- [ ] Official domain & DNS access; hosting for web app (recommended Vercel) and for the render worker (container/VM with ffmpeg).
-- [ ] Legal entity, address, contact email; approve Privacy Policy, Terms, Cookie policy, Demo disclaimer (drafts in the site).
-- [ ] Official logo/brand files (current mark is a placeholder "N" monogram in brand colours).
-- [ ] Per product (Waroeng Suramadu ERP, Marcom Command Center, EDU ADMIN, EDUCLASS, AI Content Repurposing Studio): approved description, features, audience, stage, pricing model/packages, screenshots, product URL, demo approach (sandbox or isolated demo URL), then **Verify → Publish** in Admin.
+- [x] Interim hosting: Vercel (live). Render worker: GitHub Actions (free, public repo).
+- [ ] Own domain (add in Vercel → Domains, then update Supabase Site URL and `NEXT_PUBLIC_SITE_URL`). Move off Vercel Hobby before commercial operation.
+- [x] Legal identity and texts applied (sole proprietorship, Makassar). Have a lawyer review when the business grows.
+- [x] Official logos applied.
+- [ ] Per product (Waroeng Suramadu ERP, Marcom Command Center, EDU ADMIN, EDUCLASS, AI Content Repurposing Studio): approved description, features, audience, stage, pricing model/packages, screenshots, product URL, demo approach (sandbox or isolated demo URL), — currently **provisional** content is published; correct it in Admin → Products.
 - [ ] Verified product domains for `INTEGRATION_ALLOWED_HOSTS`; isolated demo hosts for `DEMO_IFRAME_HOSTS`.
-- [ ] Explicit production deployment approval.
+- [x] Production deployment approved (2026-11-22).
 
 ## C. Optional integrations (disabled until approved)
 - [ ] AI provider + monthly budget (copy generation currently uses the deterministic rules-v1 generator).
