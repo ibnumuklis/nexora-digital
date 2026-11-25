@@ -2,12 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage } from '@/components/site/legal';
 import { COMPANY } from '@/lib/company';
+import { getI18n } from '@/lib/i18n/server';
+import { TermsId } from './content-id';
 
-export const metadata: Metadata = { title: 'Terms of service', description: 'Terms governing use of the NEXORA DIGITAL website, demos and inquiries.', alternates: { canonical: '/terms' } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.legal.titles.terms, description: t.legal.descriptions.terms, alternates: { canonical: '/terms' } };
+}
 
-export default function TermsPage() {
+function TermsEn() {
   return (
-    <LegalPage title="Terms of service">
+    <>
       <p>These terms govern your use of this website and its product demos, operated by {COMPANY.brand}, a {COMPANY.legalFormEn} owned by {COMPANY.owner}, {COMPANY.city}, {COMPANY.country}. By using the website you agree to these terms.</p>
 
       <h2>1. Information on this website</h2>
@@ -39,6 +44,11 @@ export default function TermsPage() {
 
       <h2>10. Changes</h2>
       <p>We may update these terms; the date at the top indicates the current version. Continued use after an update means you accept the revised terms.</p>
-    </LegalPage>
+    </>
   );
+}
+
+export default async function Page() {
+  const { t, locale } = await getI18n();
+  return <LegalPage title={t.legal.titles.terms}>{locale === 'id' ? <TermsId /> : <TermsEn />}</LegalPage>;
 }

@@ -26,3 +26,8 @@ Engineering work that does not depend on these items is complete. Items are orde
 - [ ] Payment gateway (out of scope; no payments are processed).
 - [ ] Outbound email/WhatsApp integration (not enabled; CRM logs contacts manually).
 - [ ] Customer testimonials/case studies with written permission.
+
+## Lokalisasi (2026-11-25)
+- [ ] Periksa dan koreksi harga "mulai dari" sementara per paket (Admin → Products → tiap produk → Pricing). Angka saat ini hanya perkiraan awal.
+- [ ] Periksa teks Bahasa Indonesia produk; versi Inggris tersimpan di kolom `translations` (diedit via SQL untuk sementara).
+- [ ] Pastikan nomor WhatsApp +62 823-9605-0549 aktif sebagai nomor bisnis (disarankan WhatsApp Business dengan salam otomatis).

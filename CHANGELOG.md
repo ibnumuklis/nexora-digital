@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.1.0] — 2026-11-25 — Lokalisasi pasar Indonesia
+- Bahasa Indonesia menjadi bahasa utama situs publik; tombol ID/EN (cookie `nx_lang`, 1 tahun) untuk versi Inggris. Admin tetap berbahasa Inggris.
+- Migrasi aditif `20261125080633_nexora_content_translations`: kolom `translations jsonb` pada products, product_features, pricing_packages, product_categories, articles. Kolom utama = Bahasa Indonesia; `translations.en` = Inggris.
+- Konten produk, kategori, fitur, paket dan artikel dalam Bahasa Indonesia (seed `supabase/seed/20261125_localize_indonesian_content.sql`).
+- Harga "mulai dari" sementara per paket (Rupiah/bulan) — Starter/Professional/Enterprise; Custom = hubungi kami. Ditampilkan di kartu produk, detail produk dan tabel harga.
+- WhatsApp menjadi CTA utama: tombol header, hero, per produk/paket (pesan otomatis berisi nama produk), tombol mengambang, akhir sesi demo, halaman kontak.
+- Segmen lokal di beranda dan halaman Solusi: UMKM kuliner & ritel, sekolah & lembaga, perusahaan menengah, agensi & reseller.
+- Kebijakan privasi, syarat & ketentuan, kebijakan cookie dan disclaimer demo versi Bahasa Indonesia (versi Indonesia yang berlaku bila ada perbedaan).
+- Formulir: label, pesan error dan pilihan anggaran disesuaikan untuk pasar lokal; nomor WhatsApp disarankan.
+- Demo sandbox: label, status dan nilai (Rp) mengikuti bahasa.
+
 ## [1.0.0] — 2026-11-22 — Public release (interim hosting)
 - Merged PR #1 to `main`; deployed to Vercel production: https://nexora-digital-jet.vercel.app (functions in Tokyo `hnd1`; previews protected by Vercel Authentication, production public).
 - Official logos (mark, wordmarks, icons, OG image) across site, admin and render templates.
