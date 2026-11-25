@@ -31,3 +31,8 @@ Engineering work that does not depend on these items is complete. Items are orde
 - [ ] Periksa dan koreksi harga "mulai dari" sementara per paket (Admin → Products → tiap produk → Pricing). Angka saat ini hanya perkiraan awal.
 - [ ] Periksa teks Bahasa Indonesia produk; versi Inggris tersimpan di kolom `translations` (diedit via SQL untuk sementara).
 - [ ] Pastikan nomor WhatsApp +62 823-9605-0549 aktif sebagai nomor bisnis (disarankan WhatsApp Business dengan salam otomatis).
+
+## Demo aplikasi asli (2026-11-25)
+- [x] Waroeng Suramadu ERP: demo iframe `https://waroeng-suramadu-demo.vercel.app` (data contoh, tanpa Firebase).
+- [ ] Bila domain NEXORA berubah: tambahkan domain baru di `frame-ancestors` (vercel.json repo waroeng) dan di `PARENTS` (web/runtime.demo.js).
+- [ ] Produk lain (EDUCLASS, EDU ADMIN, Marcom, AI Studio): kirim repo masing-masing untuk dibuatkan mode demo yang sama.

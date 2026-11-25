@@ -101,14 +101,21 @@ export function DemoSession({ productSlug, productName }: { productSlug: string;
     return () => clearInterval(t);
   }, [phase]);
 
-  // Activity tracking (any interaction inside the page counts).
+  // Activity tracking (any interaction inside the page counts). Embedded demos report their own
+  // activity via postMessage — accepted only from the demo's exact origin and only as a boolean signal.
   useEffect(() => {
     if (phase !== 'active') return;
     const mark = () => { activity.current = true; };
     const evs = ['pointerdown', 'keydown', 'wheel', 'touchstart'] as const;
     evs.forEach((e) => window.addEventListener(e, mark, { passive: true }));
-    return () => evs.forEach((e) => window.removeEventListener(e, mark));
-  }, [phase]);
+    let origin: string | null = null;
+    try { origin = session?.mode === 'iframe' && session.iframe_url ? new URL(session.iframe_url).origin : null; } catch { origin = null; }
+    const onMsg = (e: MessageEvent) => {
+      if (origin && e.origin === origin && e.data && typeof e.data === 'object' && (e.data as { type?: unknown }).type === 'nexora-demo-activity') mark();
+    };
+    window.addEventListener('message', onMsg);
+    return () => { evs.forEach((e) => window.removeEventListener(e, mark)); window.removeEventListener('message', onMsg); };
+  }, [phase, session]);
 
   // Server heartbeat: the server decides expiry.
   useEffect(() => {
@@ -166,7 +173,7 @@ export function DemoSession({ productSlug, productName }: { productSlug: string;
         </div>
       </div>
 
-      <div className="relative min-h-[460px] overflow-hidden bg-bg p-6 md:p-10">
+      <div className={`relative min-h-[460px] overflow-hidden bg-bg ${phase === 'active' && session?.mode === 'iframe' ? 'p-2 md:p-3' : 'p-6 md:p-10'}`}>
         {phase === 'active' && session && (
           <>
             <div className="pointer-events-none absolute inset-0 z-10 flex select-none flex-wrap content-center justify-center gap-24 overflow-hidden opacity-[.06]" aria-hidden>
@@ -219,7 +226,7 @@ export function DemoSession({ productSlug, productName }: { productSlug: string;
         ) : session?.mode === 'iframe' && session.iframe_url ? (
           <div className="relative">
             {idleWarn && <Alert tone="warning" className="mb-4">{fmt(T.stillThere, { s: idleRemaining })}</Alert>}
-            <iframe src={session.iframe_url} title={fmt(T.iframeTitle, { product: productName })} className="h-[640px] w-full rounded-2xl border border-line bg-surface" sandbox="allow-scripts allow-same-origin allow-forms" referrerPolicy="no-referrer" />
+            <iframe src={session.iframe_url} title={fmt(T.iframeTitle, { product: productName })} className="h-[78vh] min-h-[560px] w-full rounded-2xl border border-line bg-surface" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" referrerPolicy="no-referrer" allow="clipboard-write" />
           </div>
         ) : (
           <div className="relative">
