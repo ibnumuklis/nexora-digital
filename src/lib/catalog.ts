@@ -118,6 +118,8 @@ function sortChildren(p: PublicProduct): PublicProduct {
 
 /** Public URL for images in the public bucket only. Private-bucket paths are never exposed. */
 export function publicMediaUrl(path: string | null | undefined): string | null {
+  // Static, repository-shipped product screenshots (public/products/<slug>/<file>.webp|png|jpg).
+  if (path && /^\/products\/[a-z0-9-]+\/[a-z0-9-]+\.(webp|png|jpe?g)$/.test(path)) return path;
   const env = publicEnv();
   if (!path || !env || !path.startsWith('nexora-public/')) return null;
   return `${env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${path.split('/').map(encodeURIComponent).join('/')}`;

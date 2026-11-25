@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.2.0] — 2026-11-25 — Demo langsung Waroeng Suramadu ERP
+- Demo produk Waroeng Suramadu ERP kini memakai aplikasi aslinya dalam **mode demo** terpisah (`https://waroeng-suramadu-demo.vercel.app`, repo `ibnumuklis/waroeng-suramadu-erp`, `build_demo.js`): tanpa Firebase, database di memori browser, data contoh fiktif, ekspor dimatikan. Aplikasi produksi dan Firestore tidak tersentuh.
+- Sesi demo NEXORA (mode iframe): timer server, watermark dan batas tidak-aktif tetap berlaku; aplikasi demo mengirim sinyal aktivitas `postMessage` (divalidasi asal) agar sesi tidak terputus saat dipakai.
+- Iframe demo lebih tinggi (78vh), `allow-modals`; demo hanya bisa disematkan oleh situs NEXORA (CSP `frame-ancestors`).
+- Screenshot produk dari demo (Dashboard, Kasir, HPP, Stok) sebagai file statis `public/products/<slug>/`.
+
 ## [1.1.0] — 2026-11-25 — Lokalisasi pasar Indonesia
 - Bahasa Indonesia menjadi bahasa utama situs publik; tombol ID/EN (cookie `nx_lang`, 1 tahun) untuk versi Inggris. Admin tetap berbahasa Inggris.
 - Migrasi aditif `20261125080633_nexora_content_translations`: kolom `translations jsonb` pada products, product_features, pricing_packages, product_categories, articles. Kolom utama = Bahasa Indonesia; `translations.en` = Inggris.
