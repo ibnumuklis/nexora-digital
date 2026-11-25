@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { clearDemoCookie, demoHeartbeat, readDemoCookie } from '@/lib/demo/server';
 import { buildSandboxView, sandboxModules } from '@/lib/demo/sandbox';
 import { createSupabasePublicClient } from '@/lib/supabase/server';
+import { dictFor, getLocale } from '@/lib/i18n/server';
 
 export const runtime = 'nodejs';
 
@@ -29,15 +30,20 @@ export async function GET(request: Request) {
   }
   // Product scope check: the session's product must be the one requested.
   const db = createSupabasePublicClient();
-  const { data: product } = await db.from('products').select('id,slug,features:product_features(title,sort_order)').eq('slug', slug).eq('publication_status', 'published').maybeSingle();
+  const { data: product } = await db.from('products').select('id,slug,features:product_features(title,sort_order,translations)').eq('slug', slug).eq('publication_status', 'published').maybeSingle();
   if (!product || product.id !== hb.product_id) return NextResponse.json({ status: 'forbidden' }, { status: 403 });
 
-  const titles = [...(product.features ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((f) => f.title);
-  const modules = sandboxModules(titles);
+  const locale = await getLocale();
+  const labels = dictFor(locale).sandbox;
+  const titles = [...(product.features ?? [])].sort((a, b) => a.sort_order - b.sort_order).map((f) => {
+    const en = locale === 'en' && f.translations && typeof f.translations === 'object' ? (f.translations as { en?: { title?: unknown } }).en?.title : undefined;
+    return typeof en === 'string' && en ? en : f.title;
+  });
+  const modules = sandboxModules(titles, labels.fallback);
   const mod = modules.find((m) => m.key === moduleKey);
   if (!mod) return NextResponse.json({ status: 'invalid' }, { status: 400 });
   return NextResponse.json(
-    { status: 'active', modules, view: buildSandboxView(c.sessionId, mod), remaining_seconds: hb.remaining_seconds, idle_remaining_seconds: hb.idle_remaining_seconds },
+    { status: 'active', modules, view: buildSandboxView(c.sessionId, mod, new Date(), labels), remaining_seconds: hb.remaining_seconds, idle_remaining_seconds: hb.idle_remaining_seconds },
     { headers: { 'Cache-Control': 'no-store' } },
   );
 }

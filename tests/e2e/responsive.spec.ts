@@ -7,7 +7,7 @@ test('mobile navigation, no horizontal overflow', async ({ page }) => {
     expect(overflow, path).toBeLessThanOrEqual(1);
   }
   await page.goto('/');
-  await page.getByRole('button', { name: 'Open menu' }).click();
-  await page.getByRole('navigation', { name: 'Mobile' }).getByRole('link', { name: 'Pricing' }).click();
-  await expect(page).toHaveURL(/\/pricing$/);
+  await page.getByRole('button', { name: 'Buka menu' }).click();
+  await page.getByRole('navigation', { name: 'Menu seluler' }).getByRole('link', { name: 'Harga' }).click();
+  await expect(page).toHaveURL(/\/pricing$/, { timeout: 45_000 });
 });

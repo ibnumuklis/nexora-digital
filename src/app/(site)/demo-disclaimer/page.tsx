@@ -1,11 +1,16 @@
 import type { Metadata } from 'next';
 import { LegalPage } from '@/components/site/legal';
+import { getI18n } from '@/lib/i18n/server';
+import { DemoId } from './content-id';
 
-export const metadata: Metadata = { title: 'Demo disclaimer', alternates: { canonical: '/demo-disclaimer' } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.legal.titles.demo, description: t.legal.descriptions.demo, alternates: { canonical: '/demo-disclaimer' } };
+}
 
-export default function DemoDisclaimerPage() {
+function DemoEn() {
   return (
-    <LegalPage title="Demo disclaimer">
+    <>
       <ul>
         <li><strong>Sample data only.</strong> Demos use synthetic, randomly generated data and are isolated from every production system and customer database.</li>
         <li><strong>Illustrative workspace.</strong> The NEXORA sandbox shows representative modules and workflows of a product. It is not the full product; the final configuration, features and integrations are agreed in a written proposal.</li>
@@ -16,6 +21,11 @@ export default function DemoDisclaimerPage() {
         <li><strong>No personal data.</strong> Do not enter real personal, financial or confidential information into a demo.</li>
         <li><strong>Availability.</strong> Demos are provided “as is” and may be changed, reset or withdrawn without notice.</li>
       </ul>
-    </LegalPage>
+    </>
   );
+}
+
+export default async function Page() {
+  const { t, locale } = await getI18n();
+  return <LegalPage title={t.legal.titles.demo}>{locale === 'id' ? <DemoId /> : <DemoEn />}</LegalPage>;
 }

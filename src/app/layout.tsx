@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from 'next';
 import localFont from 'next/font/local';
 import { headers } from 'next/headers';
 import { siteUrl } from '@/lib/env';
+import { getI18n } from '@/lib/i18n/server';
+import { OG_LOCALE } from '@/lib/i18n/config';
 import './globals.css';
 
 const sans = localFont({
@@ -24,15 +26,18 @@ const display = localFont({
   ],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl()),
-  title: { default: 'NEXORA DIGITAL — Technology & Product Studio', template: '%s | NEXORA DIGITAL' },
-  description: 'NEXORA DIGITAL is a technology & product studio: SaaS products, software licenses, custom development, maintenance and white-label solutions. Build. Innovate. Transform.',
-  applicationName: 'NEXORA DIGITAL',
-  openGraph: { type: 'website', siteName: 'NEXORA DIGITAL', locale: 'en_US' },
-  twitter: { card: 'summary_large_image' },
-  robots: { index: true, follow: true },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const { locale, t } = await getI18n();
+  return {
+    metadataBase: new URL(siteUrl()),
+    title: { default: t.meta.defaultTitle, template: '%s | NEXORA DIGITAL' },
+    description: t.meta.description,
+    applicationName: 'NEXORA DIGITAL',
+    openGraph: { type: 'website', siteName: 'NEXORA DIGITAL', locale: OG_LOCALE[locale], alternateLocale: [OG_LOCALE[locale === 'id' ? 'en' : 'id']] },
+    twitter: { card: 'summary_large_image' },
+    robots: { index: true, follow: true },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: [{ media: '(prefers-color-scheme: light)', color: '#F7F8F5' }, { media: '(prefers-color-scheme: dark)', color: '#0B1915' }],
@@ -43,13 +48,14 @@ const THEME_SCRIPT = `try{var t=localStorage.getItem('nx-theme');if(!t)t=matchMe
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const nonce = (await headers()).get('x-nonce') ?? undefined;
+  const { locale, t } = await getI18n();
   return (
-    <html lang="en" className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
+    <html lang={locale} className={`${sans.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
         <script nonce={nonce} dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
       <body>
-        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-lime focus:px-4 focus:py-2 focus:text-forest">Skip to content</a>
+        <a href="#main" className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-full focus:bg-lime focus:px-4 focus:py-2 focus:text-forest">{t.common.skip}</a>
         {children}
       </body>
     </html>

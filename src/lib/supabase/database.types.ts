@@ -117,6 +117,7 @@ export type Database = {
       }
       articles: {
         Row: {
+          translations: Json
           body: string | null
           cover_path: string | null
           created_at: string
@@ -131,6 +132,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          translations?: Json
           body?: string | null
           cover_path?: string | null
           created_at?: string
@@ -145,6 +147,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          translations?: Json
           body?: string | null
           cover_path?: string | null
           created_at?: string
@@ -774,6 +777,7 @@ export type Database = {
       }
       pricing_packages: {
         Row: {
+          translations: Json
           billing_period: string
           currency: string
           description: string | null
@@ -788,6 +792,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          translations?: Json
           billing_period?: string
           currency?: string
           description?: string | null
@@ -802,6 +807,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          translations?: Json
           billing_period?: string
           currency?: string
           description?: string | null
@@ -827,6 +833,7 @@ export type Database = {
       }
       product_categories: {
         Row: {
+          translations: Json
           created_at: string
           description: string | null
           id: string
@@ -836,6 +843,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          translations?: Json
           created_at?: string
           description?: string | null
           id?: string
@@ -845,6 +853,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          translations?: Json
           created_at?: string
           description?: string | null
           id?: string
@@ -857,6 +866,7 @@ export type Database = {
       }
       product_features: {
         Row: {
+          translations: Json
           created_at: string
           description: string | null
           id: string
@@ -865,6 +875,7 @@ export type Database = {
           title: string
         }
         Insert: {
+          translations?: Json
           created_at?: string
           description?: string | null
           id?: string
@@ -873,6 +884,7 @@ export type Database = {
           title: string
         }
         Update: {
+          translations?: Json
           created_at?: string
           description?: string | null
           id?: string
@@ -995,6 +1007,7 @@ export type Database = {
       }
       products: {
         Row: {
+          translations: Json
           application_url: string | null
           benefits: string[]
           category_id: string | null
@@ -1025,6 +1038,7 @@ export type Database = {
           verified_by: string | null
         }
         Insert: {
+          translations?: Json
           application_url?: string | null
           benefits?: string[]
           category_id?: string | null
@@ -1055,6 +1069,7 @@ export type Database = {
           verified_by?: string | null
         }
         Update: {
+          translations?: Json
           application_url?: string | null
           benefits?: string[]
           category_id?: string | null

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
+import { useI18n } from './i18n';
 
 /**
  * Consent-aware first-party analytics. Nothing is sent until the visitor opts in.
@@ -46,6 +47,7 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
   const [showSettings, setShowSettings] = useState(false);
   const path = usePathname();
   const last = useRef<string | null>(null);
+  const { t } = useI18n();
 
   useEffect(() => {
     setState(readConsent());
@@ -70,14 +72,14 @@ export function ConsentProvider({ children }: { children: ReactNode }) {
       {children}
       {ready && (consent === null || showSettings) && (
         <div role="dialog" aria-modal="false" aria-labelledby="consent-title" className="fixed inset-x-3 bottom-3 z-[60] mx-auto max-w-2xl rounded-3xl border border-line bg-surface p-5 shadow-soft sm:inset-x-6 sm:bottom-6 sm:p-6">
-          <h2 id="consent-title" className="text-base font-semibold">Your privacy choices</h2>
+          <h2 id="consent-title" className="text-base font-semibold">{t.consent.title}</h2>
           <p className="mt-2 text-sm leading-6 text-muted">
-            We use essential cookies to run this site. With your permission we also record anonymous, first-party usage events (pages viewed, product interest, demo starts) to improve our products. No advertising trackers, no third-party analytics. Read the{' '}
-            <Link href="/cookies" className="font-semibold text-accent underline underline-offset-4">cookie policy</Link>.
+            {t.consent.body}{' '}
+            <Link href="/cookies" className="font-semibold text-accent underline underline-offset-4">{t.consent.link}</Link>.
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <button onClick={() => setConsent('analytics')} className="min-h-[44px] rounded-full bg-forest px-5 text-sm font-semibold text-white hover:bg-emerald-600 dark:bg-lime dark:text-forest">Allow anonymous analytics</button>
-            <button onClick={() => setConsent('essential')} className="min-h-[44px] rounded-full border border-line px-5 text-sm font-semibold hover:border-accent">Essential only</button>
+            <button onClick={() => setConsent('analytics')} className="min-h-[44px] rounded-full bg-forest px-5 text-sm font-semibold text-white hover:bg-emerald-600 dark:bg-lime dark:text-forest">{t.consent.allow}</button>
+            <button onClick={() => setConsent('essential')} className="min-h-[44px] rounded-full border border-line px-5 text-sm font-semibold hover:border-accent">{t.consent.essential}</button>
           </div>
         </div>
       )}
@@ -91,7 +93,8 @@ export function useConsent() {
 
 export function CookieSettingsLink() {
   const { openSettings } = useConsent();
-  return <button type="button" onClick={openSettings} className="hover:text-lime">Cookie settings</button>;
+  const { t } = useI18n();
+  return <button type="button" onClick={openSettings} className="hover:text-lime">{t.footer.cookieSettings}</button>;
 }
 
 /** Fire a one-off event when mounted (e.g. product_view). */

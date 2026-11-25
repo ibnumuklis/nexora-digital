@@ -2,12 +2,17 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { LegalPage } from '@/components/site/legal';
 import { COMPANY } from '@/lib/company';
+import { getI18n } from '@/lib/i18n/server';
+import { PrivacyId } from './content-id';
 
-export const metadata: Metadata = { title: 'Privacy policy', description: 'How NEXORA DIGITAL collects, uses, stores and protects personal data.', alternates: { canonical: '/privacy' } };
+export async function generateMetadata(): Promise<Metadata> {
+  const { t } = await getI18n();
+  return { title: t.legal.titles.privacy, description: t.legal.descriptions.privacy, alternates: { canonical: '/privacy' } };
+}
 
-export default function PrivacyPage() {
+function PrivacyEn() {
   return (
-    <LegalPage title="Privacy policy">
+    <>
       <p>This policy explains how {COMPANY.brand} (“we”, “us”), a {COMPANY.legalFormEn} owned by {COMPANY.owner} and based in {COMPANY.city}, {COMPANY.country}, processes personal data when you use this website, our product demos and our services. We process personal data in line with Indonesia’s Personal Data Protection Law (Undang-Undang Nomor 27 Tahun 2022 tentang Pelindungan Data Pribadi, “UU PDP”) and its implementing regulations. {COMPANY.brand} is the data controller.</p>
 
       <h2>1. Data we collect</h2>
@@ -59,6 +64,11 @@ export default function PrivacyPage() {
       <p>We may update this policy. The date at the top shows the latest version; material changes will be highlighted on this page.</p>
 
       <p>See also the <Link href="/cookies">cookie & analytics policy</Link>, <Link href="/terms">terms of service</Link> and <Link href="/demo-disclaimer">demo disclaimer</Link>.</p>
-    </LegalPage>
+    </>
   );
+}
+
+export default async function Page() {
+  const { t, locale } = await getI18n();
+  return <LegalPage title={t.legal.titles.privacy}>{locale === 'id' ? <PrivacyId /> : <PrivacyEn />}</LegalPage>;
 }

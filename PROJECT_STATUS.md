@@ -25,6 +25,11 @@ The application is functionally complete for every module in the brief and passe
 | 7 Analytics & recommendations | ✅ Built & tested | Real traffic |
 | 8 Production | ✅ Interim live on Vercel; ops workflow (render, cleanup, uptime) | Supabase Auth URLs, SMTP, GitHub secrets, own domain later |
 
+## Lokalisasi Indonesia (2026-11-25)
+- Situs publik berbahasa Indonesia secara default, toggle EN tersedia (ADR-009). Admin tetap Inggris.
+- WhatsApp jadi CTA utama; harga "mulai dari" **sementara** per paket tampil di situs — owner wajib memeriksa/mengoreksi di Admin → Products → Pricing.
+- Migrasi `20261125080633` (aditif, kolom `translations`). Total 10 migrasi.
+
 ## Owner inputs required
 See `docs/OWNER_INPUT_CHECKLIST.md`. Most urgent:
 1. Supabase Auth → URL Configuration: Site URL `https://nexora-digital-jet.vercel.app`, redirect `https://nexora-digital-jet.vercel.app/auth/callback` (+ localhost); minimum password length 12.

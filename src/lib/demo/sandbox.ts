@@ -19,7 +19,11 @@ function hash(s: string) {
 }
 
 const NAMES = ['Aurora', 'Bima', 'Cendana', 'Delta', 'Elang', 'Fajar', 'Garuda', 'Harmoni', 'Indah', 'Jati', 'Kenari', 'Lestari', 'Melati', 'Nusa', 'Orchid', 'Pelangi'];
-const STATUSES = ['Active', 'Pending', 'In review', 'Completed', 'On hold'];
+export type SandboxLabels = { statuses: string[]; sample: string; kpiRecords: string; kpiActive: string; kpiSource: string; synthetic: string; note: string; fallback: string[] };
+const DEFAULT_LABELS: SandboxLabels = {
+  statuses: ['Active', 'Pending', 'In review', 'Completed', 'On hold'], sample: 'Sample', kpiRecords: 'Sample records', kpiActive: 'Active (sample)',
+  kpiSource: 'Data source', synthetic: 'Synthetic', note: 'All values are randomly generated for this demo session and are not real business data.', fallback: ['Overview', 'Records', 'Reports'],
+};
 
 export type SandboxModule = { key: string; title: string };
 export type SandboxView = {
@@ -30,32 +34,33 @@ export type SandboxView = {
   note: string;
 };
 
-export function sandboxModules(titles: string[]): SandboxModule[] {
-  const base = titles.length ? titles : ['Overview', 'Records', 'Reports'];
+export function sandboxModules(titles: string[], fallback: string[] = DEFAULT_LABELS.fallback): SandboxModule[] {
+  const base = titles.length ? titles : fallback;
   return base.slice(0, 8).map((t, i) => ({ key: `m${i}`, title: t.slice(0, 60) }));
 }
 
-export function buildSandboxView(sessionId: string, module: SandboxModule, now = new Date()): SandboxView {
+export function buildSandboxView(sessionId: string, module: SandboxModule, now = new Date(), L: SandboxLabels = DEFAULT_LABELS): SandboxView {
+  const STATUSES = L.statuses;
   const rnd = mulberry32(hash(sessionId + module.key));
   const rows = Array.from({ length: 8 }, (_, i) => {
     const d = new Date(now.getTime() - Math.floor(rnd() * 14) * 86400000);
     return {
       ref: `SMP-${String(1000 + Math.floor(rnd() * 9000))}`,
-      name: `Sample ${NAMES[Math.floor(rnd() * NAMES.length)]} ${i + 1}`,
+      name: `${L.sample} ${NAMES[Math.floor(rnd() * NAMES.length)]} ${i + 1}`,
       status: STATUSES[Math.floor(rnd() * STATUSES.length)],
       updated: d.toISOString().slice(0, 10),
-      value: `IDR ${(Math.floor(rnd() * 900) + 100) * 1000}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
+      value: `Rp ${(Math.floor(rnd() * 900) + 100) * 1000}`.replace(/\B(?=(\d{3})+(?!\d))/g, '.'),
     };
   });
   return {
     module,
     generatedAt: now.toISOString(),
     kpis: [
-      { label: 'Sample records', value: String(rows.length) },
-      { label: 'Active (sample)', value: String(rows.filter((r) => r.status === 'Active').length) },
-      { label: 'Data source', value: 'Synthetic' },
+      { label: L.kpiRecords, value: String(rows.length) },
+      { label: L.kpiActive, value: String(rows.filter((r) => r.status === STATUSES[0]).length) },
+      { label: L.kpiSource, value: L.synthetic },
     ],
     rows,
-    note: 'All values are randomly generated for this demo session and are not real business data.',
+    note: L.note,
   };
 }

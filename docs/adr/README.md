@@ -40,3 +40,21 @@ NEXORA never proxies to a production product database. A demo is either (a) the 
 
 ## ADR-008 — Products are hidden until verified
 Public pages read only `publication_status = 'published'` rows (RLS). Seeded drafts stay hidden. The public site shows honest empty states until the owner publishes verified products via the admin console.
+
+## ADR-009 — Bahasa Indonesia as primary locale, English as toggle
+
+**Status:** Accepted (owner decision, 2026-11-25)
+
+## Context
+The primary market is Indonesia (UMKM, schools, mid-sized companies, agencies). The site was English-only.
+
+## Decision
+- Public site defaults to Bahasa Indonesia; visitors can switch to English with an ID/EN toggle stored in the first-party cookie `nx_lang` (1 year). No URL prefixes, so existing URLs and canonical links stay unchanged.
+- UI strings live in typed dictionaries `src/lib/i18n/dictionaries/{id,en}.ts` (`en` must match the `id` shape).
+- Database content: primary columns hold Bahasa Indonesia; English is stored in an additive `translations jsonb` column (`{"en": {...}}`) on products, product_features, pricing_packages, product_categories and articles. `localized()` in `src/lib/catalog.ts` overlays it for `en`, falling back to the primary text.
+- Admin console stays English; admins edit the primary (Indonesian) fields. English overrides are edited via SQL for now.
+- WhatsApp is the primary call to action (`waLink()` with a pre-filled message; clicks tracked only with analytics consent).
+
+## Consequences
+- Public pages read a cookie and are rendered dynamically (no ISR). Acceptable at current traffic; revisit with `unstable_cache` or locale-prefixed routes if traffic grows.
+- Search engines index the Indonesian version (default). An English-indexed version would need locale-prefixed URLs + hreflang later.
