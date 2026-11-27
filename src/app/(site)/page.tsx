@@ -26,7 +26,7 @@ export default async function Home() {
         <div className="absolute -right-32 -top-40 h-[560px] w-[560px] rounded-full border border-lime/10" aria-hidden />
         <div className="absolute -right-10 top-12 h-[360px] w-[360px] rounded-full border border-lime/15" aria-hidden />
         <div className="container-shell relative grid min-h-[640px] items-center gap-14 py-20 lg:grid-cols-[1.1fr_.9fr]">
-          <div className="animate-fade-up">
+          <div>
             <p className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-[10px] font-bold uppercase tracking-[.2em] text-lime">
               <span className="h-1.5 w-1.5 rounded-full bg-lime" aria-hidden /> {h.heroEyebrow}
             </p>

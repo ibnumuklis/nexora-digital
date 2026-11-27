@@ -147,16 +147,23 @@ export function formatPrice(amount: number | null, currency: string): string | n
 
 type PublicPrice = Pick<PublicProduct['pricing'][number], 'price_amount' | 'currency' | 'billing_period'>;
 
+function normalizeBillingPeriod(period: string): string {
+  if (period === 'month') return 'monthly';
+  if (period === 'year') return 'yearly';
+  return period;
+}
+
 export function billingPeriodSuffix(period: string, labels: { perMonth: string; perYear: string }): string {
-  if (period === 'monthly' || period === 'month') return labels.perMonth;
-  if (period === 'yearly' || period === 'year') return labels.perYear;
+  const normalized = normalizeBillingPeriod(period);
+  if (normalized === 'monthly') return labels.perMonth;
+  if (normalized === 'yearly') return labels.perYear;
   return '';
 }
 
 /** Show a starting price only when the published prices can be compared directly. */
 export function startingPrice(product: { pricing: readonly PublicPrice[] }) {
   const priced = product.pricing.flatMap(({ price_amount, currency, billing_period }) =>
-    price_amount === null ? [] : [{ amount: price_amount, currency, period: billing_period }],
+    price_amount === null ? [] : [{ amount: price_amount, currency, period: normalizeBillingPeriod(billing_period) }],
   );
   const first = priced[0];
   if (!first || priced.some((price) => price.currency !== first.currency || price.period !== first.period)) return null;

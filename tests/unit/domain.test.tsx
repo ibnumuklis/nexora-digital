@@ -173,7 +173,7 @@ describe('catalog and quotation pricing', () => {
 
   it('compares amounts only within the same currency and billing period', () => {
     const monthly = { price_amount: 100_000, currency: 'IDR', billing_period: 'monthly' };
-    expect(startingPrice({ pricing: [monthly, { ...monthly, price_amount: 90_000 }] }))
+    expect(startingPrice({ pricing: [monthly, { ...monthly, price_amount: 90_000, billing_period: 'month' }] }))
       .toEqual({ amount: 90_000, currency: 'IDR', period: 'monthly' });
     expect(startingPrice({ pricing: [monthly, { ...monthly, currency: 'USD' }] })).toBeNull();
     expect(startingPrice({ pricing: [monthly, { ...monthly, billing_period: 'yearly' }] })).toBeNull();

@@ -6,6 +6,7 @@ name: Operations (render worker, cleanup, uptime)
 on:
   schedule:
     - cron: '*/15 * * * *'
+    - cron: '7 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,6 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
+      OPERATIONS_EVENT: ${{ github.event_name }}
+      OPERATIONS_SCHEDULE: ${{ github.event.schedule }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
@@ -27,13 +30,19 @@ jobs:
         id: queue
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "::error::Worker configuration missing"; exit 1; fi
-          count=$(curl --fail --silent --show-error --max-time 30 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Prefer: count=exact" \
-            "$SUPABASE_URL/rest/v1/render_jobs?select=id&status=eq.queued&limit=1" -o /dev/null -D - | grep -i content-range | sed 's/.*\///' | tr -d '\r')
+          cutoff=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          headers=$(curl --fail --silent --show-error --max-time 30 --get \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: count=exact" --data-urlencode "or=(status.eq.queued,and(status.eq.processing,locked_at.lt.$cutoff))" \
+            --data-urlencode "select=id" --data-urlencode "limit=1" "$SUPABASE_URL/rest/v1/render_jobs" -o /dev/null -D -)
+          count=$(awk -F/ 'tolower($0) ~ /^content-range:/ {gsub(/\r/, "", $NF); print $NF}' <<< "$headers")
           [[ "$count" =~ ^[0-9]+$ ]] || { echo "::error::Invalid queue count"; exit 1; }
-          echo "Queued jobs: $count"
-          minute=$(date -u +%M); hour=$(date -u +%H)
-          # Always run when jobs are queued; otherwise run once a day (03:00 UTC) for demo cleanup.
-          if [ "${count:-0}" != "0" ] || { [ "$hour" = "03" ] && [ "$minute" -lt 15 ]; } || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+          echo "Queued or stale jobs: $count"
+          if [ "$count" != "0" ] || [ "$OPERATIONS_SCHEDULE" = "7 3 * * *" ] || [ "$OPERATIONS_EVENT" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
         if: steps.queue.outputs.run == 'true'
       - uses: actions/setup-node@v4

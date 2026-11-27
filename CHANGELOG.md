@@ -3,8 +3,9 @@
 ## Unreleased — platform stabilization
 
 - Catalog prices use the package billing period in both languages. Product cards compare published prices only within the same currency and billing period.
+- The home page hero text and primary CTA are fully opaque on initial display.
 - Quotation edits reject malformed amounts. Status transitions verify that the saved status still matches the one read by the action.
-- The operations workflow handles an empty render queue and checks the expected status per uptime endpoint. The scheduled worker exits with an error when it cannot claim jobs or clean up demo sessions.
+- The operations workflow handles an empty render queue, wakes the worker for stale processing locks, and checks the expected status per uptime endpoint. The scheduled worker exits with an error when it cannot claim jobs or clean up demo sessions.
 
 ## [1.2.0] — 2026-11-25 — Demo langsung Waroeng Suramadu ERP
 - Demo produk Waroeng Suramadu ERP kini memakai aplikasi aslinya dalam **mode demo** terpisah (`https://waroeng-suramadu-demo.vercel.app`, repo `ibnumuklis/waroeng-suramadu-erp`, `build_demo.js`): tanpa Firebase, database di memori browser, data contoh fiktif, ekspor dimatikan. Aplikasi produksi dan Firestore tidak tersentuh.
