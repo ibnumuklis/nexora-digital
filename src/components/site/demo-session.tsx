@@ -226,7 +226,7 @@ export function DemoSession({ productSlug, productName }: { productSlug: string;
         ) : session?.mode === 'iframe' && session.iframe_url ? (
           <div className="relative">
             {idleWarn && <Alert tone="warning" className="mb-4">{fmt(T.stillThere, { s: idleRemaining })}</Alert>}
-            <iframe src={session.iframe_url} title={fmt(T.iframeTitle, { product: productName })} className="h-[78vh] min-h-[560px] w-full rounded-2xl border border-line bg-surface" sandbox="allow-scripts allow-same-origin allow-forms allow-modals" referrerPolicy="no-referrer" allow="clipboard-write" />
+            <iframe src={session.iframe_url} title={fmt(T.iframeTitle, { product: productName })} className="h-[78vh] min-h-[560px] w-full rounded-2xl border border-line bg-surface" sandbox={'allow-scripts allow-same-origin allow-forms allow-modals' + (session.iframe_url === 'https://duobig-pos-demo.appduobig.workers.dev/' ? ' allow-downloads' : '')} referrerPolicy="no-referrer" allow="clipboard-write" />
           </div>
         ) : (
           <div className="relative">
