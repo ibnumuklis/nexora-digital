@@ -4,6 +4,11 @@ const trimmed = (max: number) => z.string().trim().max(max);
 const optionalText = (max: number) =>
   z.string().trim().max(max).optional().transform((v) => (v ? v : undefined));
 
+export const quotedAmountSchema = z.string().trim()
+  .refine((value) => value === '' || /^\d{1,12}(?:\.\d{1,2})?$/.test(value), 'Enter an amount with up to two decimal places, without currency symbols or separators.')
+  .optional()
+  .transform((value) => value ? Number(value) : null);
+
 export const INQUIRY_TYPES = ['general', 'quotation', 'consultation', 'custom_development', 'license', 'partnership'] as const;
 export const INQUIRY_SOURCES = ['contact', 'product', 'demo', 'quote', 'consultation', 'partner', 'custom_development'] as const;
 

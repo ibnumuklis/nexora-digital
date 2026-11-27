@@ -145,12 +145,29 @@ export function formatPrice(amount: number | null, currency: string): string | n
   }
 }
 
-/** Lowest public price of a product (for "starting from"). */
-export function startingPrice(p: Pick<PublicProduct, 'pricing'>): { amount: number; currency: string } | null {
-  const priced = p.pricing.filter((k) => k.price_amount !== null && k.price_amount !== undefined);
-  if (!priced.length) return null;
-  const min = priced.reduce((a, b) => (Number(b.price_amount) < Number(a.price_amount) ? b : a));
-  return { amount: Number(min.price_amount), currency: min.currency };
+type PublicPrice = Pick<PublicProduct['pricing'][number], 'price_amount' | 'currency' | 'billing_period'>;
+
+function normalizeBillingPeriod(period: string): string {
+  if (period === 'month') return 'monthly';
+  if (period === 'year') return 'yearly';
+  return period;
+}
+
+export function billingPeriodSuffix(period: string, labels: { perMonth: string; perYear: string }): string {
+  const normalized = normalizeBillingPeriod(period);
+  if (normalized === 'monthly') return labels.perMonth;
+  if (normalized === 'yearly') return labels.perYear;
+  return '';
+}
+
+/** Show a starting price only when the published prices can be compared directly. */
+export function startingPrice(product: { pricing: readonly PublicPrice[] }) {
+  const priced = product.pricing.flatMap(({ price_amount, currency, billing_period }) =>
+    price_amount === null ? [] : [{ amount: price_amount, currency, period: normalizeBillingPeriod(billing_period) }],
+  );
+  const first = priced[0];
+  if (!first || priced.some((price) => price.currency !== first.currency || price.period !== first.period)) return null;
+  return priced.reduce((min, price) => price.amount < min.amount ? price : min, first);
 }
 
 export function faqItems(faq: unknown): { q: string; a: string }[] {

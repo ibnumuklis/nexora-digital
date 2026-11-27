@@ -32,7 +32,9 @@ jobs:
       - run: npm audit --audit-level=high
       - run: npm run lint
       - run: npm run typecheck
-      - run: npm test
+      - run: npm run test:coverage
+      - uses: actions/upload-artifact@v4
+        with: { name: unit-coverage, path: coverage, retention-days: 7 }
       - run: npm run build
       - run: npx playwright install --with-deps chromium
       - name: E2E (public, security, responsive; live auth runs only when secrets exist)

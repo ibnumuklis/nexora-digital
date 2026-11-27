@@ -4,6 +4,10 @@
 **Owner:** Ibnu Muklis · **Repo:** `ibnumuklis/nexora-digital` · **Supabase:** `nexora-digital` (`ijkazeukjooauwsvwtiq`, Tokyo, Free Plan)
 **Updated:** 2026-11-22 · **Release:** `main` (PR #1 merged) · **Live (interim):** https://nexora-digital-jet.vercel.app — Vercel Hobby, functions in `hnd1` (Tokyo, next to Supabase)
 
+## Platform stabilization — 2026-11-27
+
+The stabilization branch includes catalog pricing, quotation validation, and operations fixes for release review. Production remains on `main`. The list of 10 applied Supabase migration versions matches the repository. The acceptance figures below describe the November 22 release. Consult the stabilization pull request for current application test results.
+
 ## Current truth
 The application is functionally complete for every module in the brief and passes lint, typecheck, 58 unit tests, production build, 18 browser E2E tests and a ~60-assertion RLS/RPC suite on the live database. Owner approved release on 2026-11-22; the site is **public on Vercel** with provisional product content, official logos and final legal texts (sole proprietorship, Makassar). Verified live: home, products, demo session start/end with watermark and server timer, admin redirect to staff sign-in. Remaining owner-only steps are listed below. Evidence: `docs/audit/ACCEPTANCE_REPORT.md`.
 

@@ -3,13 +3,13 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { can, PERMISSIONS, STAFF_ROLES } from '@/lib/auth/rbac';
 import { handleInquiry } from '@/lib/inquiries';
 import { _resetRateLimits } from '@/lib/http/rate-limit';
-import { inquirySchema } from '@/lib/validation/forms';
+import { inquirySchema, quotedAmountSchema } from '@/lib/validation/forms';
 import { toCsv, QUOTE_NEXT } from '@/lib/crm';
 import { renderMarkdown } from '@/lib/markdown';
 import { decodeDemoCookie, encodeDemoCookie } from '@/lib/demo/server';
 import { buildSandboxView, sandboxModules } from '@/lib/demo/sandbox';
 import { buildRecommendations, type Overview } from '@/lib/analytics/recommendations';
-import { faqItems, publicMediaUrl } from '@/lib/catalog';
+import { billingPeriodSuffix, faqItems, publicMediaUrl, startingPrice } from '@/lib/catalog';
 
 describe('RBAC matrix mirrors RLS (ADR-002)', () => {
   it('limits sensitive permissions', () => {
@@ -159,5 +159,31 @@ describe('catalog helpers', () => {
   });
   it('parses FAQ defensively', () => {
     expect(faqItems([{ q: 'A?', a: 'B' }, { q: 1 }, 'x', null])).toEqual([{ q: 'A?', a: 'B' }]);
+  });
+});
+
+describe('catalog and quotation pricing', () => {
+  it('labels legacy and current recurring billing periods', () => {
+    const labels = { perMonth: '/bulan', perYear: '/tahun' };
+    expect(billingPeriodSuffix('month', labels)).toBe('/bulan');
+    expect(billingPeriodSuffix('monthly', labels)).toBe('/bulan');
+    expect(billingPeriodSuffix('yearly', labels)).toBe('/tahun');
+    expect(billingPeriodSuffix('one_time', labels)).toBe('');
+  });
+
+  it('compares amounts only within the same currency and billing period', () => {
+    const monthly = { price_amount: 100_000, currency: 'IDR', billing_period: 'monthly' };
+    expect(startingPrice({ pricing: [monthly, { ...monthly, price_amount: 90_000, billing_period: 'month' }] }))
+      .toEqual({ amount: 90_000, currency: 'IDR', period: 'monthly' });
+    expect(startingPrice({ pricing: [monthly, { ...monthly, currency: 'USD' }] })).toBeNull();
+    expect(startingPrice({ pricing: [monthly, { ...monthly, billing_period: 'yearly' }] })).toBeNull();
+  });
+
+  it('rejects malformed quotations without silently changing their amounts', () => {
+    expect(quotedAmountSchema.parse(' 100.50 ')).toBe(100.5);
+    expect(quotedAmountSchema.parse('')).toBeNull();
+    for (const amount of ['-12', '12,50', 'Rp12', '0.001', '1234567890123']) {
+      expect(quotedAmountSchema.safeParse(amount).success).toBe(false);
+    }
   });
 });

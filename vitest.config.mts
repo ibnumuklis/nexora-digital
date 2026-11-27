@@ -16,5 +16,10 @@ export default defineConfig({
     environment: 'node',
     testTimeout: 120_000,
     pool: 'forks',
+    coverage: {
+      include: ['src/**/*.{ts,tsx}', 'worker/**/*.ts'],
+      exclude: ['src/lib/supabase/database.types.ts'],
+      reporter: ['text-summary', 'html'],
+    },
   },
 });

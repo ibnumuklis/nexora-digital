@@ -3,7 +3,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowUpRight, Check, PlayCircle, ShieldCheck } from 'lucide-react';
-import { faqItems, formatPrice, getPublishedProduct, getPublishedProducts, publicMediaUrl } from '@/lib/catalog';
+import { billingPeriodSuffix, faqItems, formatPrice, getPublishedProduct, getPublishedProducts, publicMediaUrl } from '@/lib/catalog';
 import { ProductCard, ProductVisual } from '@/components/site/product-card';
 import { Badge } from '@/components/ui';
 import { TrackOnMount, TrackedLink } from '@/components/site/consent';
@@ -135,7 +135,7 @@ export default async function ProductDetail({ params }: { params: P }) {
                       <div className="flex items-baseline justify-between gap-3">
                         <p className="font-semibold">{pk.name}</p>
                         {price ? (
-                          <p className="text-right text-xs text-muted">{t.common.startingFrom} <span className="font-display text-base font-semibold text-fg">{price}</span>{pk.billing_period === 'month' ? t.common.perMonth : ''}</p>
+                          <p className="text-right text-xs text-muted">{t.common.startingFrom} <span className="font-display text-base font-semibold text-fg">{price}</span>{billingPeriodSuffix(pk.billing_period, t.common)}</p>
                         ) : <p className="text-sm font-semibold">{t.common.onRequest}</p>}
                       </div>
                       {pk.description && <p className="mt-2 text-xs leading-5 text-muted">{pk.description}</p>}

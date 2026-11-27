@@ -2,10 +2,11 @@ name: Operations (render worker, cleanup, uptime)
 
 # Free infrastructure: GitHub-hosted runners are free for public repositories.
 # Requires repository secrets SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY (render + cleanup)
-# and variable SITE_URL (uptime check). Jobs skip gracefully when they are missing.
+# and variable SITE_URL (uptime check). Missing required configuration fails the workflow.
 on:
   schedule:
     - cron: '*/15 * * * *'
+    - cron: '7 3 * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,19 +21,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     env:
+      OPERATIONS_EVENT: ${{ github.event_name }}
+      OPERATIONS_SCHEDULE: ${{ github.event.schedule }}
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
     steps:
       - name: Check configuration and queue
         id: queue
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "Secrets not configured; skipping."; echo "run=false" >> "$GITHUB_OUTPUT"; exit 0; fi
-          count=$(curl -s -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Prefer: count=exact" -H "Range: 0-0" \
-            "$SUPABASE_URL/rest/v1/render_jobs?select=id&status=eq.queued" -o /dev/null -D - | grep -i content-range | sed 's/.*\///' | tr -d '\r')
-          echo "Queued jobs: ${count:-unknown}"
-          minute=$(date -u +%M); hour=$(date -u +%H)
-          # Always run when jobs are queued; otherwise run once a day (03:00 UTC) for demo cleanup.
-          if [ "${count:-0}" != "0" ] || { [ "$hour" = "03" ] && [ "$minute" -lt 15 ]; } || [ "${{ github.event_name }}" = "workflow_dispatch" ]; then echo "run=true" >> "$GITHUB_OUTPUT"; else echo "run=false" >> "$GITHUB_OUTPUT"; fi
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "::error::Worker configuration missing"; exit 1; fi
+          cutoff=$(date -u -d '15 minutes ago' +%Y-%m-%dT%H:%M:%SZ)
+          headers=$(curl --fail --silent --show-error --max-time 30 --get \
+            -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+            -H "Prefer: count=exact" --data-urlencode "or=(status.eq.queued,and(status.eq.processing,locked_at.lt.$cutoff))" \
+            --data-urlencode "select=id" --data-urlencode "limit=1" "$SUPABASE_URL/rest/v1/render_jobs" -o /dev/null -D -)
+          count=$(awk -F/ 'tolower($0) ~ /^content-range:/ {gsub(/\r/, "", $NF); print $NF}' <<< "$headers")
+          [[ "$count" =~ ^[0-9]+$ ]] || { echo "::error::Invalid queue count"; exit 1; }
+          echo "Queued or stale jobs: $count"
+          if [ "$count" != "0" ] || [ "$OPERATIONS_SCHEDULE" = "7 3 * * *" ] || [ "$OPERATIONS_EVENT" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
       - uses: actions/checkout@v4
         if: steps.queue.outputs.run == 'true'
       - uses: actions/setup-node@v4
@@ -56,11 +66,11 @@ jobs:
         env:
           SITE_URL: ${{ vars.SITE_URL }}
         run: |
-          if [ -z "$SITE_URL" ]; then echo "SITE_URL variable not set; skipping."; exit 0; fi
+          if [ -z "$SITE_URL" ]; then echo "::error::SITE_URL variable not set"; exit 1; fi
           fail=0
           for p in / /products /contact /api/demo/heartbeat; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' -X GET "$SITE_URL$p")
+            code=$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' -X GET "$SITE_URL$p")
             echo "$p -> $code"
-            case "$p:$code" in "/api/demo/heartbeat:405"|"/api/demo/heartbeat:401") ;; *:200) ;; *) fail=1 ;; esac
+            case "$p:$code" in "/api/demo/heartbeat:405"|"/api/demo/heartbeat:401"|"/:200"|"/products:200"|"/contact:200") ;; *) fail=1 ;; esac
           done
           exit $fail

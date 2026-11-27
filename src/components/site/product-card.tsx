@@ -2,7 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowUpRight, Boxes } from 'lucide-react';
 import { Badge } from '@/components/ui';
-import { formatPrice, publicMediaUrl, startingPrice, type PublicProduct } from '@/lib/catalog';
+import { billingPeriodSuffix, formatPrice, publicMediaUrl, startingPrice, type PublicProduct } from '@/lib/catalog';
 import { getI18n } from '@/lib/i18n/server';
 import { fmt } from '@/lib/i18n/config';
 
@@ -48,7 +48,7 @@ export async function ProductCard({ product }: { product: PublicProduct }) {
         <div className="mt-5 flex items-end justify-between gap-3 border-t border-line pt-4">
           <div className="text-xs text-muted">
             {from ? (
-              <>{t.common.startingFrom}<span className="mt-0.5 block font-display text-base font-semibold text-fg">{formatPrice(from.amount, from.currency)}<span className="text-xs font-normal text-muted">{t.common.perMonth}</span></span></>
+              <>{t.common.startingFrom}<span className="mt-0.5 block font-display text-base font-semibold text-fg">{formatPrice(from.amount, from.currency)}<span className="text-xs font-normal text-muted">{billingPeriodSuffix(from.period, t.common)}</span></span></>
             ) : <span className="font-semibold text-fg">{t.common.onRequest}</span>}
           </div>
           <Link href={`/products/${product.slug}`} className="inline-flex items-center gap-1.5 text-sm font-semibold text-fg hover:text-accent">{t.product.explore} <ArrowUpRight size={15} aria-hidden /></Link>

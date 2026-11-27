@@ -131,7 +131,10 @@ test.describe('public website', () => {
       await page.goto(path);
       const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).exclude('[role="dialog"]').analyze();
       const serious = results.violations.filter((v) => ['serious', 'critical'].includes(v.impact ?? ''));
-      expect(serious.map((v) => `${path}: ${v.id} (${v.nodes.length})`)).toEqual([]);
+      const failures = serious.flatMap(({ id, nodes }) =>
+        nodes.map((node) => `${path}: ${id} (${node.target.join(' ')})`),
+      );
+      expect(failures).toEqual([]);
     }
   });
 

@@ -37,7 +37,7 @@ Project `nexora-digital` (team `ulfa-mafridoh`), Git-linked to `ibnumuklis/nexor
 - Custom domain later: Vercel → Project → Domains → add domain, set DNS, then update `NEXT_PUBLIC_SITE_URL` and Supabase Site URL/redirects and redeploy.
 
 ## 4b. Operations (free)
-`.github/workflows/operations.yml` runs every 15 minutes: renders queued MP4 jobs (ffmpeg on the runner), daily demo cleanup, uptime check. Needs repo secrets `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` and variable `SITE_URL`; skips silently if absent.
+`.github/workflows/operations.yml` runs every 15 minutes: checks for queued or stale render jobs (ffmpeg on the runner) and checks uptime. A separate 03:07 UTC schedule starts daily demo cleanup. Configure repository secrets `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` and the variable `SITE_URL`. Missing configuration fails the relevant job.
 
 ## 5. Smoke tests after deploy
 ```bash
