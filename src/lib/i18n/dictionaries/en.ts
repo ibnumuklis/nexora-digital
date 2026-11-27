@@ -156,6 +156,7 @@ export const en: Dict = {
     notFound: 'Product not found',
     all: 'All products',
     tryDemo: 'Try the demo',
+    openApplication: 'Open application',
     askWa: 'Ask on WhatsApp',
     quote: 'Request a quote',
     demoNote: 'Timed demo session on synthetic sample data.',

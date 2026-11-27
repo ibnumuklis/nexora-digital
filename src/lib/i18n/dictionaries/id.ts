@@ -154,6 +154,7 @@ export const id = {
     notFound: 'Produk tidak ditemukan',
     all: 'Semua produk',
     tryDemo: 'Coba demo',
+    openApplication: 'Buka aplikasi',
     askWa: 'Tanya via WhatsApp',
     quote: 'Minta penawaran',
     demoNote: 'Sesi demo berbatas waktu dengan data contoh.',

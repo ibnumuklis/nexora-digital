@@ -32,6 +32,7 @@ export default async function ProductDetail({ params }: { params: P }) {
   if (!p) notFound();
   const [{ data: all }, { t }] = await Promise.all([getPublishedProducts(), getI18n()]);
   const D = t.detail;
+  const appUrl = p.application_url?.startsWith('https://') ? p.application_url : null;
   const related = all.filter((x) => x.id !== p.id && x.category?.slug && x.category.slug === p.category?.slug).slice(0, 3);
   const faq = faqItems(p.faq);
   const screenshots = p.media.filter((m) => m.media_type === 'image').map((m) => ({ ...m, url: publicMediaUrl(m.storage_path) })).filter((m) => m.url);
@@ -68,6 +69,11 @@ export default async function ProductDetail({ params }: { params: P }) {
                 <TrackedLink event="demo_cta_click" productSlug={p.slug} href={`/demo/${p.slug}`} className="inline-flex min-h-[44px] items-center gap-2 rounded-full bg-lime px-5 text-sm font-semibold text-forest hover:bg-white">
                   <PlayCircle size={16} aria-hidden /> {D.tryDemo}
                 </TrackedLink>
+              )}
+              {appUrl && (
+                <a href={appUrl} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold hover:border-lime hover:text-lime">
+                  {D.openApplication} <ArrowUpRight size={15} aria-hidden />
+                </a>
               )}
               <TrackedLink event="contact_cta_click" productSlug={p.slug} href={`/contact?type=quotation&product=${p.slug}`} className="inline-flex min-h-[44px] items-center gap-2 rounded-full border border-white/25 px-5 text-sm font-semibold hover:border-lime hover:text-lime">
                 {D.quote} <ArrowUpRight size={15} aria-hidden />
