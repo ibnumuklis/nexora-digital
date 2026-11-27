@@ -73,16 +73,20 @@ async function queue(once = false) {
   const deadline = Date.now() + Number(process.env.WORKER_MAX_MINUTES ?? 40) * 60_000;
   process.on('SIGTERM', () => { running = false; });
   process.on('SIGINT', () => { running = false; });
-  while (running) {
+  while (running && (!once || Date.now() < deadline)) {
     const { data, error } = await db.rpc('claim_render_job', { p_worker: workerId });
     const job = data as Job | null;
-    if (error) { console.error('[worker] claim failed', error.message); await new Promise((r) => setTimeout(r, idleMs * 2)); continue; }
+    if (error) {
+      if (once) throw new Error('Could not claim render job: ' + error.message);
+      console.error('[worker] claim failed', error.message);
+      await new Promise((r) => setTimeout(r, idleMs * 2));
+      continue;
+    }
     if (!job?.id) {
       if (once) break; // scheduled (GitHub Actions) mode: exit when the queue is empty
       await new Promise((r) => setTimeout(r, idleMs));
       continue;
     }
-    if (once && Date.now() > deadline) running = false;
     console.log(`[worker] job ${job.id} ${job.job_type} ${job.width}x${job.height}`);
     try {
       const r = await processJob(job, async (p) => { await db.rpc('update_render_progress', { p_job: job.id, p_worker: workerId, p_progress: p }); });
@@ -102,7 +106,8 @@ async function queue(once = false) {
   }
   if (once) {
     const { data, error } = await db.rpc('demo_cleanup', { p_retention_days: 30 });
-    console.log('[worker] demo cleanup', error ? `failed: ${error.message}` : JSON.stringify(data));
+    if (error) throw new Error('Demo cleanup failed: ' + error.message);
+    console.log('[worker] demo cleanup', JSON.stringify(data));
   }
   console.log('[worker] stopped');
 }

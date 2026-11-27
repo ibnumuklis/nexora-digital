@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { PageHero, CtaBand, EngagementGrid, PACKAGE_TIER_KEYS, TIER_NAMES } from '@/components/site/sections';
-import { formatPrice, getPublishedProducts } from '@/lib/catalog';
+import { billingPeriodSuffix, formatPrice, getPublishedProducts } from '@/lib/catalog';
 import { WhatsAppLink, WhatsAppIcon } from '@/components/site/whatsapp';
 import { getI18n } from '@/lib/i18n/server';
 import { fmt } from '@/lib/i18n/config';
@@ -47,7 +47,7 @@ export default async function PricingPage() {
                         return (
                           <td key={k} className="px-5 py-5">
                             {price ? (
-                              <><span className="block text-[11px] text-muted">{t.common.startingFrom}</span><span className="font-display text-base font-semibold">{price}</span><span className="text-xs text-muted">{t.common.perMonth}</span></>
+                              <><span className="block text-[11px] text-muted">{t.common.startingFrom}</span><span className="font-display text-base font-semibold">{price}</span><span className="text-xs text-muted">{billingPeriodSuffix(pk?.billing_period ?? "", t.common)}</span></>
                             ) : (
                               <WhatsAppLink text={fmt(t.wa.tier, { tier: TIER_NAMES[k], product: p.name })} productSlug={p.slug} label={`pricing_${k}`} className="inline-flex items-center gap-1.5 font-semibold text-accent hover:underline"><WhatsAppIcon size={13} /> {t.common.onRequest}</WhatsAppLink>
                             )}

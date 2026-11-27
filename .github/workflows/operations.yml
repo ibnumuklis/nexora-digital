@@ -27,8 +27,8 @@ jobs:
         id: queue
         run: |
           if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then echo "::error::Worker configuration missing"; exit 1; fi
-          count=$(curl --fail --silent --show-error --max-time 30 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Prefer: count=exact" -H "Range: 0-0" \
-            "$SUPABASE_URL/rest/v1/render_jobs?select=id&status=eq.queued" -o /dev/null -D - | grep -i content-range | sed 's/.*\///' | tr -d '\r')
+          count=$(curl --fail --silent --show-error --max-time 30 -H "apikey: $SUPABASE_SERVICE_ROLE_KEY" -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" -H "Prefer: count=exact" \
+            "$SUPABASE_URL/rest/v1/render_jobs?select=id&status=eq.queued&limit=1" -o /dev/null -D - | grep -i content-range | sed 's/.*\///' | tr -d '\r')
           [[ "$count" =~ ^[0-9]+$ ]] || { echo "::error::Invalid queue count"; exit 1; }
           echo "Queued jobs: $count"
           minute=$(date -u +%M); hour=$(date -u +%H)
@@ -62,6 +62,6 @@ jobs:
           for p in / /products /contact /api/demo/heartbeat; do
             code=$(curl --silent --show-error --max-time 20 -o /dev/null -w '%{http_code}' -X GET "$SITE_URL$p")
             echo "$p -> $code"
-            case "$p:$code" in "/api/demo/heartbeat:405"|"/api/demo/heartbeat:401") ;; *:200) ;; *) fail=1 ;; esac
+            case "$p:$code" in "/api/demo/heartbeat:405"|"/api/demo/heartbeat:401"|"/:200"|"/products:200"|"/contact:200") ;; *) fail=1 ;; esac
           done
           exit $fail

@@ -13,6 +13,7 @@ export const en: Dict = {
     orForm: 'or fill in the form',
     startingFrom: 'From',
     perMonth: '/month',
+    perYear: '/year',
     onRequest: 'Contact us',
     priceNote: 'Starting prices in Indonesian Rupiah, excluding applicable taxes. Final prices are set out in a written quotation.',
     learnMore: 'Learn more',

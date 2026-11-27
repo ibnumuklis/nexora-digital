@@ -11,6 +11,7 @@ export const id = {
     orForm: 'atau isi formulir',
     startingFrom: 'Mulai dari',
     perMonth: '/bulan',
+    perYear: '/tahun',
     onRequest: 'Hubungi kami',
     priceNote: 'Harga mulai dari, dalam Rupiah, belum termasuk pajak yang berlaku. Harga final tertulis di penawaran.',
     learnMore: 'Selengkapnya',

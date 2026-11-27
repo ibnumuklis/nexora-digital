@@ -4,7 +4,7 @@
 
 Public product showcase and sales platform with a secure admin console, protected interactive demos, CRM & quotations, an AI Content Studio (PNG/JPG/MP4), and evidence-based marketing analytics. Each linked product stays independently deployed; NEXORA is the hub/control plane.
 
-> Status: feature-complete on branch `claude/nexora-production-readiness`, **not deployed**. See `PROJECT_STATUS.md` and `docs/audit/ACCEPTANCE_REPORT.md`.
+> The public site runs on Vercel from `main`. Platform stabilization work is tracked on `codex/platform-stabilization`. See `PROJECT_STATUS.md` for release history and open items.
 
 ## Stack
 Next.js 15 (App Router, Server Actions) · React 19 · TypeScript (strict) · Tailwind CSS · Supabase (Postgres, Auth, Storage, RLS) · zod · Satori/resvg/sharp (images) · FFmpeg worker (video) · Vitest · Playwright + axe · GitHub Actions.
