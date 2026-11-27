@@ -2,6 +2,7 @@
 
 ## Unreleased — platform stabilization
 
+- CI publishes an HTML unit-test coverage report for the app and worker.
 - Catalog prices use the package billing period in both languages. Product cards compare published prices only within the same currency and billing period.
 - The home page hero text and primary CTA are fully opaque on initial display.
 - Quotation edits reject malformed amounts. Status transitions verify that the saved status still matches the one read by the action.

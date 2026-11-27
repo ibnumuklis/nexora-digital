@@ -24,6 +24,7 @@ Admin: create an account at `/auth/signup`, confirm the email, then a Super Admi
 | `npm run lint` | ESLint (flat config, TS rules, 0 warnings) |
 | `npm run typecheck` | `tsc` for app and worker |
 | `npm test` | Vitest unit/integration (includes real image + MP4 renders; needs ffmpeg) |
+| `npm run test:coverage` | Vitest coverage summary and HTML report in `coverage/` |
 | `npm run test:e2e` | Playwright (starts `next start`; run `npm run build` first) |
 | `npm run build` | Production build |
 | `npm run worker` | Render worker (see `docs/RENDER_WORKER.md`) |
